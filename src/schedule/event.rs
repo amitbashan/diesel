@@ -1,24 +1,47 @@
+use crate::ql::Predicate;
+use chrono::Duration;
 use std::rc::Rc;
 
-use chrono::{prelude::*, Duration};
+pub type Time = (u8, u8);
+
+pub type TimeSpan = (Time, Duration);
 
 pub trait Event {
     fn title(&self) -> Rc<String>;
     fn description(&self) -> Option<Rc<String>> {
         None
     }
-    fn datetime(&self) -> NaiveDateTime;
-    fn duration(&self) -> Duration;
+    fn predicate(&self) -> &Predicate;
+    fn time_span(&self) -> TimeSpan;
 }
 
-pub struct BasicEvent {
+pub struct SkeletonEvent {
     pub title: Rc<String>,
     pub description: Rc<String>,
-    pub date: NaiveDateTime,
-    pub duration: Duration,
+    predicate: Predicate,
+    time: Time,
+    duration: Duration,
 }
 
-impl Event for BasicEvent {
+impl SkeletonEvent {
+    pub fn new(
+        title: String,
+        description: String,
+        predicate: Predicate,
+        time: Time,
+        duration: Duration,
+    ) -> Self {
+        Self {
+            title: Rc::new(title),
+            description: Rc::new(description),
+            predicate,
+            time,
+            duration,
+        }
+    }
+}
+
+impl Event for SkeletonEvent {
     fn title(&self) -> Rc<String> {
         self.title.clone()
     }
@@ -27,11 +50,11 @@ impl Event for BasicEvent {
         Some(self.description.clone())
     }
 
-    fn datetime(&self) -> NaiveDateTime {
-        self.date
+    fn predicate(&self) -> &Predicate {
+        &self.predicate
     }
 
-    fn duration(&self) -> Duration {
-        self.duration
+    fn time_span(&self) -> TimeSpan {
+        (self.time, self.duration)
     }
 }

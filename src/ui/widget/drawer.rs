@@ -1,9 +1,6 @@
 use dioxus::prelude::*;
 
-use super::{
-    size::WidgetSize, TimeWidget, UpcomingEventsWidget, Widget, WidgetDataTransfer,
-    WidgetDragState, WidgetManagerState, WIDGETS,
-};
+use super::{Widget, WidgetDataTransfer, WidgetDragState, WidgetManagerState, WIDGETS};
 
 #[component]
 fn PreviewContainer<'a>(

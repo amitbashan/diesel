@@ -1,9 +1,13 @@
 mod event;
 
-use chrono::prelude::*;
 use std::rc::Rc;
 
-pub use event::{BasicEvent, Event};
+pub use event::SkeletonEvent;
+
+use chrono::prelude::*;
+pub use event::Event;
+
+use crate::ql::{Context, Evaluate};
 
 #[derive(Default)]
 pub struct Schedule {
@@ -11,20 +15,14 @@ pub struct Schedule {
 }
 
 impl Schedule {
-    pub fn new(events: Vec<Rc<dyn Event>>) -> Self {
-        Self { events }
+    pub fn schedule_event(&mut self, event: Rc<dyn Event>) {
+        self.events.push(event);
     }
 
-    pub fn events(&self) -> &Vec<Rc<dyn Event>> {
-        &self.events
-    }
-
-    pub fn events_on_date<'a>(
-        &'a self,
-        date: &'a NaiveDate,
-    ) -> impl Iterator<Item = Rc<dyn Event + 'a>> {
+    pub fn get_events_on_date(&self, date: NaiveDate) -> impl Iterator<Item = &Rc<dyn Event>> {
+        let context = Context { date };
         self.events
             .iter()
-            .filter_map(|e| (e.datetime().date() == *date).then_some(e.clone()))
+            .filter(move |event| event.predicate().evaluate(&context))
     }
 }

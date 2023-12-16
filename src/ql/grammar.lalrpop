@@ -1,0 +1,65 @@
+use std::str::FromStr;
+use crate::ql::ast::*;
+use lalrpop_util::ParseError;
+
+grammar;
+
+U8: u8 = r"[0-9]+" => u8::from_str(<>).unwrap();
+U32: u32 = r"[0-9]+" => u32::from_str(<>).unwrap();
+
+Time: (u8, u8) = {
+    <h: U8> ":" <min: U8> =>? (h < 24 && min < 60).then_some((h, min)).ok_or(ParseError::User { error: "invalid time" }),
+}
+
+pub TimeSpan: ((u8, u8), (u8, u8)) = {
+    <Time> "-" <Time> =>? Ok((<>)),
+}
+
+Placeholder: PlaceholderUnit = {
+    "wd" => PlaceholderUnit::Weekday,
+    "md" => PlaceholderUnit::Monthday,
+    "mo" => PlaceholderUnit::Month,
+    "y" => PlaceholderUnit::Year,
+    "date" => PlaceholderUnit::Date,
+}
+
+Weekday: chrono::Weekday = {
+    "sun" => chrono::Weekday::Sun,
+    "mon" => chrono::Weekday::Mon,
+    "tue" => chrono::Weekday::Tue,
+    "wed" => chrono::Weekday::Wed,
+    "thu" => chrono::Weekday::Thu,
+    "fri" => chrono::Weekday::Sat,
+    "sat" => chrono::Weekday::Sat,
+}
+
+Month: chrono::Month = {
+    "jan" => chrono::Month::January,
+    "feb" => chrono::Month::February,
+    "mar" => chrono::Month::March,
+    "apr" => chrono::Month::April,
+    "may" => chrono::Month::May,
+    "jun" => chrono::Month::June,
+    "jul" => chrono::Month::July,
+    "aug" => chrono::Month::August,
+    "sep" => chrono::Month::September,
+    "oct" => chrono::Month::October,
+    "nov" => chrono::Month::November,
+    "dec" => chrono::Month::December,
+}
+
+Date: chrono::NaiveDate = {
+    <y: U32> "-" <m: U32> "-" <d: U32> =>? chrono::NaiveDate::from_ymd_opt(y as i32, m, d).ok_or(ParseError::User { error: "invalid date" }),
+    <y: U32> "-" <m: Month> "-" <d: U32> =>? chrono::NaiveDate::from_ymd_opt(y as i32, m as u32, d).ok_or(ParseError::User { error: "invalid date" }),
+}
+
+pub Expression: Expression = {
+    Placeholder => Expression::Placeholder(<>),
+    Weekday => Expression::Weekday(<>),
+    Month => Expression::Month(<>),
+    Date => Expression::Date(<>),
+}
+
+pub Predicate: Predicate = {
+    <Expression> "=" <Expression> => Predicate::Equality(<>),
+}

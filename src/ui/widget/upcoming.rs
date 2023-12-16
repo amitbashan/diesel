@@ -1,14 +1,9 @@
-use std::borrow::Cow;
-
-use chrono::Duration;
 use dioxus::prelude::*;
-
-use crate::{hook::use_interval, schedule::Schedule};
 
 use super::WidgetSize;
 
 pub fn UpcomingEventsWidget(cx: &ScopeState, size: WidgetSize) -> Element {
-    use_interval(cx, std::time::Duration::new(60, 0));
+    /*use_interval(cx, std::time::Duration::new(60, 0));
     let duration = Duration::hours(3);
     let dt = chrono::Local::now().naive_local();
     let schedule = use_shared_state::<Schedule>(cx).unwrap();
@@ -68,5 +63,6 @@ pub fn UpcomingEventsWidget(cx: &ScopeState, size: WidgetSize) -> Element {
                 events
             }
         }
-    }
+    }*/
+    todo!()
 }

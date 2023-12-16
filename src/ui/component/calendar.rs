@@ -1,14 +1,33 @@
 use std::rc::Rc;
 
-use chrono::{prelude::*, Datelike};
+use chrono::{prelude::*, Datelike, Duration};
 use dioxus::prelude::*;
 
-use crate::schedule::*;
+use crate::{ql::*, schedule::*};
 
 #[component]
 fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
-    const DURATION_PLACEHOLDER: &str = "d/mo/y:(h-min)?";
+    const PREDICATE_ERROR_STATE: usize = 0;
+    const TIMESPAN_ERROR_STATE: usize = 1;
+    const INPUT_ERROR: &str = "input-error";
+    let schedule = use_shared_state::<Schedule>(cx).unwrap();
+    let error_state = use_ref(cx, || [false; 2]);
+    let reset_state = || {
+        state.set(None);
+        error_state.with_mut(|s| s.iter_mut().for_each(|f| *f = false));
+    };
+    let get_error_state = move |i| {
+        let flag: bool = error_state.read()[i];
+        flag.then_some(INPUT_ERROR).unwrap_or_default()
+    };
+    let predicate_input_error_state = get_error_state(PREDICATE_ERROR_STATE);
+    let timespan_input_error_state = get_error_state(TIMESPAN_ERROR_STATE);
+
     if let Some(date) = state.get() {
+        let predicate_expression = Predicate::Equality(
+            Expression::Placeholder(PlaceholderUnit::Date),
+            Expression::Date(*date),
+        );
         render! {
             div {
                 class: "modal modal-open",
@@ -18,93 +37,120 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                         class: "font-bold text-lg",
                         "Schedule a new event",
                     }
-                    div {
-                        class: "form-control pt-4",
+                    form {
+                        onsubmit: move |e| {
+                            let values = &e.data.values;
+                            let predicate = &values["predicate"][0];
+                            let predicate = if predicate.is_empty() {
+                                Ok(predicate_expression)
+                            } else {
+                                grammar::PredicateParser::new().parse(predicate.as_str())
+                            };
+                            let time_span = &values["timespan"][0];
+                            let time_span = grammar::TimeSpanParser::new().parse(time_span.as_str());
+
+                            if predicate.is_err() {
+                                error_state.with_mut(|s| s[PREDICATE_ERROR_STATE] = true);
+                            }
+
+                            if time_span.is_err() {
+                                error_state.with_mut(|s| s[PREDICATE_ERROR_STATE] = true);
+                            }
+
+                            if let (Ok(predicate), Ok(time_span)) = (predicate, time_span) {
+                                let title = values["title"][0].clone();
+                                let description = values["description"][0].clone();
+                                let ((h1, min1), (h2, min2)) = time_span;
+                                let d1 = Duration::hours(h1 as i64) + Duration::minutes(min1 as i64);
+                                let d2 = Duration::hours(h2 as i64) + Duration::minutes(min2 as i64);
+                                let duration = d2 - d1;
+                                let time = (d1 > d2).then_some(time_span.1).unwrap_or(time_span.0);
+                                let event = SkeletonEvent::new(title, description, predicate, time, duration);
+                                schedule.with_mut(|s| s.schedule_event(Rc::new(event)));
+                                reset_state();
+                            }
+                        },
                         div {
-                            class: "grid grid-cols-3 gap-2",
+                            class: "form-control pt-4",
                             div {
+                                class: "grid grid-cols-2 gap-2",
                                 div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Date"
-                                    }
-                                }
-                                input {
-                                    class: "input input-sm input-bordered w-full",
-                                    placeholder: "d/mo/y",
-                                }
-                            }
-                            div {
-                                class: "col-span-2",
-                                div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Duration"
-                                    }
-                                }
-                                div {
-                                    class: "join",
+                                    class: "col-span-2",
                                     div {
-                                        class: "tooltip tooltip-bottom",
-                                        "data-tip": "Start",
-                                        input {
-                                            class: "join-item input input-sm input-bordered w-full",
-                                            placeholder: DURATION_PLACEHOLDER,
+                                        class: "label",
+                                        span {
+                                            class: "label-text",
+                                            "Predicate"
                                         }
                                     }
+                                    input {
+                                        class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
+                                        name: "predicate",
+                                        r#type: "text",
+                                        placeholder: predicate_expression.to_string(),
+                                    }
+                                }
+                                div {
                                     div {
-                                        class: "tooltip tooltip-bottom",
-                                        "data-tip": "End",
-                                        input {
-                                            class: "join-item input input-sm input-bordered w-full",
-                                            placeholder: DURATION_PLACEHOLDER,
+                                        class: "label",
+                                        span {
+                                            class: "label-text",
+                                            "Title"
                                         }
                                     }
-                                }
-                            }
-                            div {
-                                div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Title"
+                                    input {
+                                        class: "input input-sm input-bordered w-full",
+                                        name: "title",
+                                        r#type: "text",
+                                        placeholder: "Add title…",
                                     }
                                 }
-                                input {
-                                    class: "input input-sm input-bordered w-full",
-                                    placeholder: "Add title…",
-                                }
-                            }
-                            div {
-                                class: "col-span-3",
                                 div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Description"
+                                    div {
+                                        class: "label",
+                                        span {
+                                            class: "label-text",
+                                            "Time span"
+                                        }
+                                    }
+                                    input {
+                                        class: "input input-sm input-bordered w-full {timespan_input_error_state}",
+                                        name: "timespan",
+                                        r#type: "text",
+                                        placeholder: "h:min-h:min",
                                     }
                                 }
-                                textarea {
-                                    class: "textarea textarea-bordered w-full",
-                                    placeholder: "Add description…",
+                                div {
+                                    class: "col-span-2",
+                                    div {
+                                        class: "label",
+                                        span {
+                                            class: "label-text",
+                                            "Description"
+                                        }
+                                    }
+                                    textarea {
+                                        class: "textarea textarea-bordered w-full",
+                                        name: "description",
+                                        placeholder: "Add description…",
+                                    }
                                 }
                             }
                         }
-                    }
-                    div {
-                        class: "modal-action",
-                        button {
-                            class: "btn",
-                            "Schedule"
+                        div {
+                            class: "modal-action",
+                            button {
+                                class: "btn",
+                                r#type: "submit",
+                                "Schedule"
+                            }
                         }
                     }
                 }
                 div {
                     class: "modal-backdrop cursor-pointer",
                     onclick: move |_| {
-                        state.set(None);
+                        reset_state();
                     }
                 }
             }
@@ -127,13 +173,13 @@ fn EventTitleButton(cx: Scope, title: Rc<String>) -> Element {
 #[component]
 fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDate>>) -> Element {
     let now = Local::now().date_naive();
-    let bordered = (now.day0() == date.day0())
+    let bordered = (&now == date)
         .then_some("card-bordered border-neutral")
         .unwrap_or_default();
     let schedule = use_shared_state::<Schedule>(cx).unwrap().read();
-    let d = date.day0() + 1;
+    let d = date.day();
     let weekday = date.weekday();
-    let events = schedule.events_on_date(&date);
+    let events = schedule.get_events_on_date(*date);
     let displayed_events: Vec<_> = events
         .map(|e| render! { EventTitleButton { title: e.title() }})
         .collect();
@@ -148,7 +194,7 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
     render! {
         div {
             class: "card card-compact bg-base-100 shadow-xl overflow-clip {bordered}",
-            ondblclick: move |e| {
+            ondblclick: move |_| {
                 modal_state.set(Some(*date));
             },
             div {
@@ -173,7 +219,7 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
 #[component]
 pub fn MonthlyCalendar(cx: Scope, year: i32, month: u32) -> Element {
     let date = chrono::NaiveDate::from_ymd_opt(*year, *month, 1).unwrap();
-    let days = date.iter_days().take_while(|d| d.month0() + 1 == *month);
+    let days = date.iter_days().take_while(|d| d.month() == *month);
     let modal_state = use_state(cx, || None::<NaiveDate>);
     let cards =
         days.map(|d| render! { CalendarCard { date: d, modal_state: modal_state.clone() } });
