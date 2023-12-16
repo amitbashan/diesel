@@ -12,11 +12,12 @@ use crate::{
 
 #[component]
 fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
-    const PREDICATE_ERROR_STATE: usize = 0;
-    const TIMESPAN_ERROR_STATE: usize = 1;
+    const TITLE_ERROR_STATE: usize = 0;
+    const PREDICATE_ERROR_STATE: usize = 1;
+    const TIMESPAN_ERROR_STATE: usize = 2;
     const INPUT_ERROR: &str = "input-error";
     let schedule = use_shared_state::<Schedule>(cx).unwrap();
-    let error_state = use_ref(cx, || [false; 2]);
+    let error_state = use_ref(cx, || [false; 3]);
     let reset_state = || {
         state.set(None);
         error_state.with_mut(|s| s.iter_mut().for_each(|f| *f = false));
@@ -25,6 +26,10 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
         let flag: bool = error_state.read()[i];
         flag.then_some(INPUT_ERROR).unwrap_or_default()
     };
+    let set_error_state = |i| {
+        error_state.with_mut(|s| s[i] = true);
+    };
+    let title_input_error_state = get_error_state(TITLE_ERROR_STATE);
     let predicate_input_error_state = get_error_state(PREDICATE_ERROR_STATE);
     let timespan_input_error_state = get_error_state(TIMESPAN_ERROR_STATE);
 
@@ -55,15 +60,20 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                             let time_span = grammar::TimeSpanParser::new().parse(time_span.as_str());
 
                             if predicate.is_err() {
-                                error_state.with_mut(|s| s[PREDICATE_ERROR_STATE] = true);
+                                set_error_state(PREDICATE_ERROR_STATE);
                             }
 
                             if time_span.is_err() {
-                                error_state.with_mut(|s| s[TIMESPAN_ERROR_STATE] = true);
+                                set_error_state(TIMESPAN_ERROR_STATE);
                             }
 
                             if let (Ok(predicate), Ok(time_span)) = (predicate, time_span) {
-                                let title = values["title"][0].clone();
+                                let title = &values["title"][0];
+                                if title.is_empty() {
+                                    set_error_state(TITLE_ERROR_STATE);
+                                    return;
+                                }
+                                let title = title.clone();
                                 let description = values["description"][0].clone();
                                 let ((h1, min1), (h2, min2)) = time_span;
                                 let d1 = Duration::hours(h1 as i64) + Duration::minutes(min1 as i64);
@@ -104,7 +114,7 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                                         }
                                     }
                                     input {
-                                        class: "input input-sm input-bordered w-full",
+                                        class: "input input-sm input-bordered w-full {title_input_error_state}",
                                         name: "title",
                                         r#type: "text",
                                         placeholder: "Add title…",

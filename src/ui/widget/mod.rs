@@ -146,7 +146,7 @@ pub fn WidgetManager<'a>(
     render! {
         div {
             // grid-rows-6 and grid-cols-8 instead of grid-rows-{ROWS} and grid-cols-{COLS} because of Tailwind.
-            class: "grid grid-rows-6 overflow-hidden grid-cols-8 p-2 gap-1 items-start rounded flex-1 bg-base-200",
+            class: "grid grid-rows-6 grid-cols-8 p-2 gap-1 items-start rounded flex-1 bg-base-200",
             cells,
         }
     }

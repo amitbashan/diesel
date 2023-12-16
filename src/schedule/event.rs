@@ -7,8 +7,8 @@ pub type Time = (u8, u8);
 pub type TimeSpan = (Time, Duration);
 
 pub trait Event {
-    fn title(&self) -> Rc<String>;
-    fn description(&self) -> Option<Rc<String>> {
+    fn title(&self) -> &Rc<String>;
+    fn description(&self) -> Option<&Rc<String>> {
         None
     }
     fn predicate(&self) -> &Predicate;
@@ -42,12 +42,12 @@ impl SkeletonEvent {
 }
 
 impl Event for SkeletonEvent {
-    fn title(&self) -> Rc<String> {
-        self.title.clone()
+    fn title(&self) -> &Rc<String> {
+        &self.title
     }
 
-    fn description(&self) -> Option<Rc<String>> {
-        Some(self.description.clone())
+    fn description(&self) -> Option<&Rc<String>> {
+        Some(&self.description)
     }
 
     fn predicate(&self) -> &Predicate {
