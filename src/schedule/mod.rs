@@ -19,10 +19,18 @@ impl Schedule {
         self.events.push(event);
     }
 
-    pub fn get_events_on_date(&self, date: NaiveDate) -> impl Iterator<Item = &Rc<dyn Event>> {
+    pub fn get_event(&self, i: usize) -> &Rc<dyn Event> {
+        &self.events[i]
+    }
+
+    pub fn get_events_on_date(
+        &self,
+        date: NaiveDate,
+    ) -> impl Iterator<Item = (usize, &Rc<dyn Event>)> {
         let context = Context { date };
         self.events
             .iter()
-            .filter(move |event| event.predicate().evaluate(&context))
+            .enumerate()
+            .filter(move |(_, event)| event.predicate().evaluate(&context))
     }
 }

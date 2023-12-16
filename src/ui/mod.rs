@@ -5,13 +5,19 @@ mod component;
 mod view;
 pub mod widget;
 
-use view::{Calendar, Index};
+use view::*;
 
 use crate::{schedule::Schedule, ui::widget::WidgetManagerState};
 
 #[rustfmt::skip]
-#[derive(Clone, Debug, PartialEq, Routable)]
+#[derive(Debug, Clone, PartialEq, Routable)]
 pub enum Route {
+    #[nest("/event")]
+        #[layout(Event)]
+            #[route("/:i")]
+            EventInstance { i: usize },
+        #[end_layout]
+    #[end_nest]
     #[route("/")]
     Index {},
     #[route("/calendar")]

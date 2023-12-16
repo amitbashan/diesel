@@ -2,8 +2,13 @@ use std::rc::Rc;
 
 use chrono::{prelude::*, Datelike, Duration};
 use dioxus::prelude::*;
+use dioxus_router::prelude::*;
 
-use crate::{ql::*, schedule::*};
+use crate::{
+    ql::*,
+    schedule::{Event, *},
+    ui::Route,
+};
 
 #[component]
 fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
@@ -54,7 +59,7 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                             }
 
                             if time_span.is_err() {
-                                error_state.with_mut(|s| s[PREDICATE_ERROR_STATE] = true);
+                                error_state.with_mut(|s| s[TIMESPAN_ERROR_STATE] = true);
                             }
 
                             if let (Ok(predicate), Ok(time_span)) = (predicate, time_span) {
@@ -161,10 +166,19 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
 }
 
 #[component]
-fn EventTitleButton(cx: Scope, title: Rc<String>) -> Element {
+fn EventTitleButton(cx: Scope, i: usize) -> Element {
+    let navigator = use_navigator(cx);
+    let schedule = use_shared_state::<Schedule>(cx).unwrap();
+    let schedule = schedule.read();
+    let event = schedule.get_event(*i);
+    let title = event.title();
+
     render! {
         button {
             class: "join-item w-full btn btn-xxs btn-outline justify-start",
+            onclick: move |_| {
+                navigator.push(Route::EventInstance { i: *i });
+            },
             span { class: "truncate", "{title}" }
         }
     }
@@ -181,7 +195,7 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
     let weekday = date.weekday();
     let events = schedule.get_events_on_date(*date);
     let displayed_events: Vec<_> = events
-        .map(|e| render! { EventTitleButton { title: e.title() }})
+        .map(|(i, _)| render! { EventTitleButton { i: i }})
         .collect();
     let count = displayed_events.len();
     let displayed_events = render! {

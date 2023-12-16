@@ -10,7 +10,7 @@ title = "Diesel"
 [web.watcher]
 reload_html = true
 watch_path = ["src", "public"]
-index_on_404 = true
+index_on_404 = false
 
 [web.resource]
 style = ["tailwind.css", "extra.css"]
