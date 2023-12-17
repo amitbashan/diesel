@@ -127,7 +127,7 @@ pub fn WidgetManager<'a>(
     drag_state: WidgetDragState<'a>,
     data_transfer: UseState<Option<WidgetDataTransfer>>,
 ) -> Element {
-    let wms = use_shared_state::<WidgetManagerState>(cx).unwrap().read();
+    let wms = use_shared_state::<WidgetManagerState>(cx)?.read();
     let occupied_cells: HashSet<_> = wms.occupied_cells(false).collect();
     let cells = (0..ROWS * COLS).filter_map(|i| {
         (!occupied_cells.contains(&i)).then_some({

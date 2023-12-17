@@ -1,23 +1,25 @@
 use std::rc::Rc;
 
-use chrono::{prelude::*, Datelike, Duration};
+use chrono::prelude::*;
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
 use crate::{
     ql::*,
-    schedule::{Event, *},
-    ui::Route,
+    schedule::*,
+    ui::{
+        view::event::{
+            DEFAULT_ERROR_STATE, INPUT_ERROR, PREDICATE_ERROR_STATE, TIMESPAN_ERROR_STATE,
+            TITLE_ERROR_STATE,
+        },
+        Route,
+    },
 };
 
 #[component]
 fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
-    const TITLE_ERROR_STATE: usize = 0;
-    const PREDICATE_ERROR_STATE: usize = 1;
-    const TIMESPAN_ERROR_STATE: usize = 2;
-    const INPUT_ERROR: &str = "input-error";
-    let schedule = use_shared_state::<Schedule>(cx).unwrap();
-    let error_state = use_ref(cx, || [false; 3]);
+    let schedule = use_shared_state::<Schedule>(cx)?;
+    let error_state = use_ref(cx, || DEFAULT_ERROR_STATE);
     let reset_state = || {
         state.set(None);
         error_state.with_mut(|s| s.iter_mut().for_each(|f| *f = false));
@@ -38,12 +40,13 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
             Expression::Placeholder(PlaceholderUnit::Date),
             Expression::Date(*date),
         );
+
         render! {
             div {
                 class: "modal modal-open",
                 div {
                     class: "modal-box",
-                    h3 {
+                    span {
                         class: "font-bold text-lg",
                         "Schedule a new event",
                     }
@@ -56,18 +59,18 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                             } else {
                                 grammar::PredicateParser::new().parse(predicate.as_str())
                             };
-                            let time_span = &values["timespan"][0];
-                            let time_span = grammar::TimeSpanParser::new().parse(time_span.as_str());
+                            let time_pair = &values["timepair"][0];
+                            let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
 
                             if predicate.is_err() {
                                 set_error_state(PREDICATE_ERROR_STATE);
                             }
 
-                            if time_span.is_err() {
+                            if time_pair.is_err() {
                                 set_error_state(TIMESPAN_ERROR_STATE);
                             }
 
-                            if let (Ok(predicate), Ok(time_span)) = (predicate, time_span) {
+                            if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
                                 let title = &values["title"][0];
                                 if title.is_empty() {
                                     set_error_state(TITLE_ERROR_STATE);
@@ -75,12 +78,7 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                                 }
                                 let title = title.clone();
                                 let description = values["description"][0].clone();
-                                let ((h1, min1), (h2, min2)) = time_span;
-                                let d1 = Duration::hours(h1 as i64) + Duration::minutes(min1 as i64);
-                                let d2 = Duration::hours(h2 as i64) + Duration::minutes(min2 as i64);
-                                let duration = d2 - d1;
-                                let time = (d1 > d2).then_some(time_span.1).unwrap_or(time_span.0);
-                                let event = SkeletonEvent::new(title, description, predicate, time, duration);
+                                let event = SkeletonEvent::new(title, description, predicate, time_pair);
                                 schedule.with_mut(|s| s.schedule_event(Rc::new(event)));
                                 reset_state();
                             }
@@ -130,7 +128,7 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                                     }
                                     input {
                                         class: "input input-sm input-bordered w-full {timespan_input_error_state}",
-                                        name: "timespan",
+                                        name: "timepair",
                                         r#type: "text",
                                         placeholder: "h:min-h:min",
                                     }
@@ -178,10 +176,12 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
 #[component]
 fn EventTitleButton(cx: Scope, i: usize) -> Element {
     let navigator = use_navigator(cx);
-    let schedule = use_shared_state::<Schedule>(cx).unwrap();
+    let schedule = use_shared_state::<Schedule>(cx)?;
     let schedule = schedule.read();
-    let event = schedule.get_event(*i);
+    let event = schedule.get_event(*i)?;
     let title = event.title();
+    let title = title.borrow();
+    let title = title.as_str();
 
     render! {
         button {
@@ -200,7 +200,7 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
     let bordered = (&now == date)
         .then_some("card-bordered border-neutral")
         .unwrap_or_default();
-    let schedule = use_shared_state::<Schedule>(cx).unwrap().read();
+    let schedule = use_shared_state::<Schedule>(cx)?.read();
     let d = date.day();
     let weekday = date.weekday();
     let events = schedule.get_events_on_date(*date);

@@ -1,5 +1,5 @@
 mod calendar;
-mod event;
+pub mod event;
 mod index;
 
 pub use calendar::Calendar;

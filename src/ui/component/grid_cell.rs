@@ -13,7 +13,7 @@ pub fn GridCell<'a>(
 ) -> Element {
     const DRAG_OPACITY: u8 = 25;
     let class = class.unwrap_or_default();
-    let wms = use_shared_state::<WidgetManagerState>(cx).unwrap();
+    let wms = use_shared_state::<WidgetManagerState>(cx)?;
 
     if let Some(mut wdt) = widget_data {
         let widget = WIDGETS[wdt.widget as usize];

@@ -1,18 +1,18 @@
 use std::str::FromStr;
-use crate::ql::ast::*;
+use chrono::prelude::*;
+use crate::{schedule::event::*, ql::ast::*};
 use lalrpop_util::ParseError;
 
 grammar;
 
-U8: u8 = r"[0-9]+" => u8::from_str(<>).unwrap();
 U32: u32 = r"[0-9]+" => u32::from_str(<>).unwrap();
 
-Time: (u8, u8) = {
-    <h: U8> ":" <min: U8> =>? (h < 24 && min < 60).then_some((h, min)).ok_or(ParseError::User { error: "invalid time" }),
+Time: Time = {
+    <hour: U32> ":" <minute: U32> =>? NaiveTime::from_hms_opt(hour, minute, 0).map(|t| Time(t)).ok_or(ParseError::User { error: "invalid time" }),
 }
 
-pub TimeSpan: ((u8, u8), (u8, u8)) = {
-    <Time> "-" <Time> =>? Ok((<>)),
+pub TimePair: TimePair = {
+    <Time> "-" <Time> =>? Ok(TimePair(<>)),
 }
 
 Placeholder: PlaceholderUnit = {

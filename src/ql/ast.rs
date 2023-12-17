@@ -1,8 +1,6 @@
-use std::{fmt, rc::Rc};
+use std::fmt;
 
 use chrono::{Datelike, Month, NaiveDate, Weekday};
-
-use crate::schedule::{Event, Schedule};
 
 use super::*;
 

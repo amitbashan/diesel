@@ -1,13 +1,13 @@
-mod event;
+pub mod event;
 
 use std::rc::Rc;
 
 pub use event::SkeletonEvent;
 
 use chrono::prelude::*;
-pub use event::Event;
+pub use event::{Event, TimePair};
 
-use crate::ql::{Context, Evaluate};
+use crate::ql::{Context, Evaluate, Predicate};
 
 #[derive(Default)]
 pub struct Schedule {
@@ -19,8 +19,43 @@ impl Schedule {
         self.events.push(event);
     }
 
-    pub fn get_event(&self, i: usize) -> &Rc<dyn Event> {
-        &self.events[i]
+    pub fn cancel_event(&mut self, i: usize) -> Option<Rc<dyn Event>> {
+        (self.events.len() > i).then_some(self.events.remove(i))
+    }
+
+    pub fn edit_event(
+        &mut self,
+        i: usize,
+        new_title: Option<String>,
+        new_description: Option<String>,
+        new_predicate: Option<Predicate>,
+        new_time_pair: Option<TimePair>,
+    ) {
+        if let Some(event) = self.events.get(i) {
+            if let Some(new_title) = new_title {
+                let title = event.title();
+                title.replace(new_title);
+            }
+
+            if let Some(new_description) = new_description {
+                let description = event.description();
+                description.replace(new_description);
+            }
+
+            if let Some(new_predicate) = new_predicate {
+                let predicate = event.predicate();
+                predicate.replace(new_predicate);
+            }
+
+            if let Some(new_time_pair) = new_time_pair {
+                let time_pair = event.time_pair();
+                time_pair.replace(new_time_pair);
+            }
+        }
+    }
+
+    pub fn get_event(&self, i: usize) -> Option<&Rc<dyn Event>> {
+        self.events.get(i)
     }
 
     pub fn get_events_on_date(
@@ -28,9 +63,9 @@ impl Schedule {
         date: NaiveDate,
     ) -> impl Iterator<Item = (usize, &Rc<dyn Event>)> {
         let context = Context { date };
-        self.events
-            .iter()
-            .enumerate()
-            .filter(move |(_, event)| event.predicate().evaluate(&context))
+        self.events.iter().enumerate().filter(move |(_, event)| {
+            let predicate = event.predicate().get();
+            predicate.evaluate(&context)
+        })
     }
 }
