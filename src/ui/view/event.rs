@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
@@ -57,24 +55,8 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
     let schedule = use_shared_state::<Schedule>(cx)?;
     let schedule_ref = schedule.read();
     let event = schedule_ref.get_event(*i)?;
-    let title = event.title();
-    let title = title.borrow();
-    let title = title.as_str();
-    let description = event.description();
-    let description = description.borrow();
-    let description = description.as_str();
-    let description = if description.is_empty() {
-        render! {
-            p {
-                class: "italic placeholder-base-content",
-                "No description provided."
-            }
-        }
-    } else {
-        render! {
-            p { description }
-        }
-    };
+    let title = event.title().borrow().clone();
+    let description = event.description().borrow().clone();
     let predicate = event.predicate().get().to_string();
     let time_pair = event.time_pair().get().to_string();
     let navigator = use_navigator(cx);
@@ -159,7 +141,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                                     class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
                                     name: "predicate",
                                     r#type: "text",
-                                    predicate.as_str()
+                                    value: predicate,
                                 }
                             }
                             div {
@@ -175,7 +157,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                                     name: "title",
                                     r#type: "text",
                                     placeholder: "Add title…",
-                                    title,
+                                    value: title,
                                 }
                             }
                             div {
@@ -191,7 +173,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                                     name: "timepair",
                                     r#type: "text",
                                     placeholder: "h:min-h:min",
-                                    time_pair.as_str()
+                                    value: time_pair
                                 }
                             }
                             div {
@@ -207,7 +189,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                                     class: "textarea textarea-bordered w-full",
                                     name: "description",
                                     placeholder: "Add description…",
-                                    description
+                                    value: description
                                 }
                             }
                         }
@@ -252,7 +234,10 @@ pub fn EventDisplay(cx: Scope, modal_state: UseState<bool>, i: usize) -> Element
         }
     } else {
         render! {
-            p { description }
+            p {
+                class: "whitespace-pre-wrap",
+                description
+            }
         }
     };
 
