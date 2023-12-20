@@ -1,5 +1,6 @@
 [package]
 name = "diesel"
+repository = "https://github.com/amitbashan/diesel"
 authors = ["Amit Bashan <amitba@netanya.ac.il>"]
 version = "0.1.0"
 edition = "2021"

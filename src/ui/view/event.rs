@@ -5,7 +5,7 @@ use crate::{
     ql::grammar,
     schedule::*,
     ui::{
-        component::{svg, Layout, Navbar},
+        component::{svg, Layout, Modal, Navbar},
         Route,
     },
 };
@@ -51,7 +51,6 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
     const TITLE_ERROR_STATE: usize = 0;
     const PREDICATE_ERROR_STATE: usize = 1;
     const TIMESPAN_ERROR_STATE: usize = 2;
-    let open = state.get().then_some("modal-open").unwrap_or_default();
     let schedule = use_shared_state::<Schedule>(cx)?;
     let schedule_ref = schedule.read();
     let event = schedule_ref.get_event(*i)?;
@@ -77,138 +76,129 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
     let timespan_input_error_state = get_error_state(TIMESPAN_ERROR_STATE);
 
     render! {
-        div {
-            class: "modal {open}",
+        Modal {
+            open: state.clone(),
             div {
-                class: "modal-box",
-                div {
-                    class: "flex justify-between",
-                    span {
-                        class: "font-bold text-lg",
-                        "Edit event"
-                    }
-                    button {
-                        class: "btn btn-neutral",
-                        onclick: move |_| {
-                            schedule.with_mut(|s| s.cancel_event(*i));
-                            navigator.go_back();
-                        },
-                        svg::Trash {}
-                    }
+                class: "flex justify-between",
+                span {
+                    class: "font-bold text-lg",
+                    "Edit event"
                 }
-                form {
-                    onsubmit: move |e| {
-                        let values = &e.data.values;
-                        let predicate = &values["predicate"][0];
-                        let predicate = grammar::PredicateParser::new().parse(predicate.as_str());
-                        let time_pair = &values["timepair"][0];
-                        let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
-
-                        if predicate.is_err() {
-                            set_error_state(PREDICATE_ERROR_STATE);
-                        }
-
-                        if time_pair.is_err() {
-                            set_error_state(TIMESPAN_ERROR_STATE);
-                        }
-
-                        if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
-                            let title = &values["title"][0];
-                            if title.is_empty() {
-                                set_error_state(TITLE_ERROR_STATE);
-                                return;
-                            }
-                            let title = title.clone();
-                            let description = values["description"][0].clone();
-                            schedule.with_mut(|s| s.edit_event(*i, Some(title), Some(description), Some(predicate), Some(time_pair)));
-                            reset_state();
-                        }
+                button {
+                    class: "btn btn-neutral",
+                    onclick: move |_| {
+                        schedule.with_mut(|s| s.cancel_event(*i));
+                        navigator.go_back();
                     },
-                    div {
-                        class: "form-control pt-4",
-                        div {
-                            class: "grid grid-cols-2 gap-2",
-                            div {
-                                class: "col-span-2",
-                                div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Predicate"
-                                    }
-                                }
-                                input {
-                                    class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
-                                    name: "predicate",
-                                    r#type: "text",
-                                    value: predicate,
-                                }
-                            }
-                            div {
-                                div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Title"
-                                    }
-                                }
-                                input {
-                                    class: "input input-sm input-bordered w-full {title_input_error_state}",
-                                    name: "title",
-                                    r#type: "text",
-                                    placeholder: "Add title…",
-                                    value: title,
-                                }
-                            }
-                            div {
-                                div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Time span"
-                                    }
-                                }
-                                input {
-                                    class: "input input-sm input-bordered w-full {timespan_input_error_state}",
-                                    name: "timepair",
-                                    r#type: "text",
-                                    placeholder: "h:min-h:min",
-                                    maxlength: 11,
-                                    value: time_pair
-                                }
-                            }
-                            div {
-                                class: "col-span-2",
-                                div {
-                                    class: "label",
-                                    span {
-                                        class: "label-text",
-                                        "Description"
-                                    }
-                                }
-                                textarea {
-                                    class: "textarea textarea-bordered w-full",
-                                    name: "description",
-                                    placeholder: "Add description…",
-                                    value: description
-                                }
-                            }
-                        }
-                    }
-                    div {
-                        class: "modal-action",
-                        button {
-                            class: "btn",
-                            r#type: "submit",
-                            svg::Check {}
-                        }
-                    }
+                    svg::Trash {}
                 }
             }
-            div {
-                class: "modal-backdrop cursor-pointer",
-                onclick: move |_| {
-                    state.set(false);
+            form {
+                onsubmit: move |e| {
+                    let values = &e.data.values;
+                    let predicate = &values["predicate"][0];
+                    let predicate = grammar::PredicateParser::new().parse(predicate.as_str());
+                    let time_pair = &values["timepair"][0];
+                    let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
+
+                    if predicate.is_err() {
+                        set_error_state(PREDICATE_ERROR_STATE);
+                    }
+
+                    if time_pair.is_err() {
+                        set_error_state(TIMESPAN_ERROR_STATE);
+                    }
+
+                    if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
+                        let title = &values["title"][0];
+                        if title.is_empty() {
+                            set_error_state(TITLE_ERROR_STATE);
+                            return;
+                        }
+                        let title = title.clone();
+                        let description = values["description"][0].clone();
+                        schedule.with_mut(|s| s.edit_event(*i, Some(title), Some(description), Some(predicate), Some(time_pair)));
+                        reset_state();
+                    }
+                },
+                div {
+                    class: "form-control pt-4",
+                    div {
+                        class: "grid grid-cols-2 gap-2",
+                        div {
+                            class: "col-span-2",
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Predicate"
+                                }
+                            }
+                            input {
+                                class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
+                                name: "predicate",
+                                r#type: "text",
+                                value: predicate,
+                            }
+                        }
+                        div {
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Title"
+                                }
+                            }
+                            input {
+                                class: "input input-sm input-bordered w-full {title_input_error_state}",
+                                name: "title",
+                                r#type: "text",
+                                placeholder: "Add title…",
+                                value: title,
+                            }
+                        }
+                        div {
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Time span"
+                                }
+                            }
+                            input {
+                                class: "input input-sm input-bordered w-full {timespan_input_error_state}",
+                                name: "timepair",
+                                r#type: "text",
+                                placeholder: "h:min-h:min",
+                                maxlength: 11,
+                                value: time_pair
+                            }
+                        }
+                        div {
+                            class: "col-span-2",
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Description"
+                                }
+                            }
+                            textarea {
+                                class: "textarea textarea-bordered w-full",
+                                name: "description",
+                                placeholder: "Add description…",
+                                value: description
+                            }
+                        }
+                    }
+                }
+                div {
+                    class: "modal-action",
+                    button {
+                        class: "btn",
+                        r#type: "submit",
+                        svg::Check {}
+                    }
                 }
             }
         }

@@ -59,10 +59,29 @@ pub fn Navbar<'a>(cx: Scope<'a>, center: Option<Element<'a>>, end: Option<Elemen
                     end
                 }
                 div {
-                    class: "flex-none",
+                    class: "dropdown dropdown-bottom dropdown-end",
                     button {
                         class: "btn btn-square btn-ghost",
+                        tabindex: 0,
                         svg::Ellipsis {}
+                    }
+                    ul {
+                        class: "dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40",
+                        tabindex: 0,
+                        li {
+                            Link {
+                                to: Route::Calendar {},
+                                svg::DocumentStack {},
+                                "Manual",
+                            }
+                        }
+                        li {
+                            Link {
+                                to: Route::Calendar {},
+                                svg::Gear {},
+                                "Settings",
+                            }
+                        }
                     }
                 }
             }

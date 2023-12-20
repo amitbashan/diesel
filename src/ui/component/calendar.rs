@@ -4,6 +4,7 @@ use chrono::prelude::*;
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
+use super::Modal;
 use crate::{
     ql::*,
     schedule::*,
@@ -17,11 +18,13 @@ use crate::{
 };
 
 #[component]
-fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
+fn NewEventModal(cx: Scope, open: UseState<bool>, state: UseState<Option<NaiveDate>>) -> Element {
     let schedule = use_shared_state::<Schedule>(cx)?;
+    let date = (*state.get())?;
     let error_state = use_ref(cx, || DEFAULT_ERROR_STATE);
     let reset_state = || {
         state.set(None);
+        open.set(false);
         error_state.with_mut(|s| s.iter_mut().for_each(|f| *f = false));
     };
     let get_error_state = move |i| {
@@ -35,142 +38,129 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
     let predicate_input_error_state = get_error_state(PREDICATE_ERROR_STATE);
     let timespan_input_error_state = get_error_state(TIMESPAN_ERROR_STATE);
 
-    if let Some(date) = state.get() {
-        let predicate_expression = Predicate::Equality(
-            Expression::Placeholder(PlaceholderUnit::Date),
-            Expression::Date(*date),
-        );
+    let predicate_expression = Predicate::Equality(
+        Expression::Placeholder(PlaceholderUnit::Date),
+        Expression::Date(date),
+    );
 
-        render! {
-            div {
-                class: "modal modal-open",
-                div {
-                    class: "modal-box",
-                    span {
-                        class: "font-bold text-lg",
-                        "Schedule a new event",
+    render! {
+        Modal {
+            open: open.clone(),
+            span {
+                class: "font-bold text-lg",
+                "Schedule a new event",
+            }
+            form {
+                onsubmit: move |e| {
+                    let values = &e.data.values;
+                    let predicate = &values["predicate"][0];
+                    let predicate = if predicate.is_empty() {
+                        Ok(predicate_expression)
+                    } else {
+                        grammar::PredicateParser::new().parse(predicate.as_str())
+                    };
+                    let time_pair = &values["timepair"][0];
+                    let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
+
+                    if predicate.is_err() {
+                        set_error_state(PREDICATE_ERROR_STATE);
                     }
-                    form {
-                        onsubmit: move |e| {
-                            let values = &e.data.values;
-                            let predicate = &values["predicate"][0];
-                            let predicate = if predicate.is_empty() {
-                                Ok(predicate_expression)
-                            } else {
-                                grammar::PredicateParser::new().parse(predicate.as_str())
-                            };
-                            let time_pair = &values["timepair"][0];
-                            let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
 
-                            if predicate.is_err() {
-                                set_error_state(PREDICATE_ERROR_STATE);
-                            }
+                    if time_pair.is_err() {
+                        set_error_state(TIMESPAN_ERROR_STATE);
+                    }
 
-                            if time_pair.is_err() {
-                                set_error_state(TIMESPAN_ERROR_STATE);
-                            }
-
-                            if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
-                                let title = &values["title"][0];
-                                if title.is_empty() {
-                                    set_error_state(TITLE_ERROR_STATE);
-                                    return;
-                                }
-                                let title = title.clone();
-                                let description = values["description"][0].clone();
-                                let event = SkeletonEvent::new(title, description, predicate, time_pair);
-                                schedule.with_mut(|s| s.schedule_event(Rc::new(event)));
-                                reset_state();
-                            }
-                        },
+                    if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
+                        let title = &values["title"][0];
+                        if title.is_empty() {
+                            set_error_state(TITLE_ERROR_STATE);
+                            return;
+                        }
+                        let title = title.clone();
+                        let description = values["description"][0].clone();
+                        let event = SkeletonEvent::new(title, description, predicate, time_pair);
+                        schedule.with_mut(|s| s.schedule_event(Rc::new(event)));
+                        reset_state();
+                    }
+                },
+                div {
+                    class: "form-control pt-4",
+                    div {
+                        class: "grid grid-cols-2 gap-2",
                         div {
-                            class: "form-control pt-4",
+                            class: "col-span-2",
                             div {
-                                class: "grid grid-cols-2 gap-2",
-                                div {
-                                    class: "col-span-2",
-                                    div {
-                                        class: "label",
-                                        span {
-                                            class: "label-text",
-                                            "Predicate"
-                                        }
-                                    }
-                                    input {
-                                        class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
-                                        name: "predicate",
-                                        r#type: "text",
-                                        placeholder: predicate_expression.to_string(),
-                                    }
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Predicate"
                                 }
-                                div {
-                                    div {
-                                        class: "label",
-                                        span {
-                                            class: "label-text",
-                                            "Title"
-                                        }
-                                    }
-                                    input {
-                                        class: "input input-sm input-bordered w-full {title_input_error_state}",
-                                        name: "title",
-                                        r#type: "text",
-                                        placeholder: "Add title…",
-                                    }
-                                }
-                                div {
-                                    div {
-                                        class: "label",
-                                        span {
-                                            class: "label-text",
-                                            "Time span"
-                                        }
-                                    }
-                                    input {
-                                        class: "input input-sm input-bordered w-full {timespan_input_error_state}",
-                                        name: "timepair",
-                                        r#type: "text",
-                                        maxlength: 11,
-                                        placeholder: "h:min-h:min",
-                                    }
-                                }
-                                div {
-                                    class: "col-span-2",
-                                    div {
-                                        class: "label",
-                                        span {
-                                            class: "label-text",
-                                            "Description"
-                                        }
-                                    }
-                                    textarea {
-                                        class: "textarea textarea-bordered w-full",
-                                        name: "description",
-                                        placeholder: "Add description…",
-                                    }
-                                }
+                            }
+                            input {
+                                class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
+                                name: "predicate",
+                                r#type: "text",
+                                placeholder: predicate_expression.to_string(),
                             }
                         }
                         div {
-                            class: "modal-action",
-                            button {
-                                class: "btn",
-                                r#type: "submit",
-                                "Schedule"
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Title"
+                                }
+                            }
+                            input {
+                                class: "input input-sm input-bordered w-full {title_input_error_state}",
+                                name: "title",
+                                r#type: "text",
+                                placeholder: "Add title…",
+                            }
+                        }
+                        div {
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Time span"
+                                }
+                            }
+                            input {
+                                class: "input input-sm input-bordered w-full {timespan_input_error_state}",
+                                name: "timepair",
+                                r#type: "text",
+                                maxlength: 11,
+                                placeholder: "h:min-h:min",
+                            }
+                        }
+                        div {
+                            class: "col-span-2",
+                            div {
+                                class: "label",
+                                span {
+                                    class: "label-text",
+                                    "Description"
+                                }
+                            }
+                            textarea {
+                                class: "textarea textarea-bordered w-full",
+                                name: "description",
+                                placeholder: "Add description…",
                             }
                         }
                     }
                 }
                 div {
-                    class: "modal-backdrop cursor-pointer",
-                    onclick: move |_| {
-                        reset_state();
+                    class: "modal-action",
+                    button {
+                        class: "btn",
+                        r#type: "submit",
+                        "Schedule"
                     }
                 }
             }
         }
-    } else {
-        None
     }
 }
 
@@ -196,7 +186,12 @@ pub fn EventTitleButton(cx: Scope, i: usize) -> Element {
 }
 
 #[component]
-fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDate>>) -> Element {
+fn CalendarCard(
+    cx: Scope,
+    date: NaiveDate,
+    modal_open: UseState<bool>,
+    modal_state: UseState<Option<NaiveDate>>,
+) -> Element {
     let now = Local::now().date_naive();
     let bordered = (&now == date)
         .then_some("card-bordered border-neutral")
@@ -220,6 +215,7 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
         div {
             class: "card bg-base-100 shadow-xl overflow-clip {bordered}",
             ondblclick: move |_| {
+                modal_open.set(true);
                 modal_state.set(Some(*date));
             },
             div {
@@ -245,9 +241,10 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
 pub fn MonthlyCalendar(cx: Scope, year: i32, month: u32) -> Element {
     let date = chrono::NaiveDate::from_ymd_opt(*year, *month, 1).unwrap();
     let days = date.iter_days().take_while(|d| d.month() == *month);
+    let modal_open = use_state(cx, || false);
     let modal_state = use_state(cx, || None::<NaiveDate>);
     let cards =
-        days.map(|d| render! { CalendarCard { date: d, modal_state: modal_state.clone() } });
+        days.map(|d| render! { CalendarCard { date: d, modal_open: modal_open.clone(), modal_state: modal_state.clone() } });
 
     render! {
         div {
@@ -257,6 +254,6 @@ pub fn MonthlyCalendar(cx: Scope, year: i32, month: u32) -> Element {
                 cards
             }
         }
-        NewEventModal { state: modal_state.clone() }
+        NewEventModal { open: modal_open.clone(), state: modal_state.clone() }
     }
 }
