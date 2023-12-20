@@ -7,7 +7,10 @@ pub mod widget;
 
 use view::*;
 
-use crate::{schedule::Schedule, ui::widget::WidgetManagerState};
+use crate::{
+    schedule::Schedule,
+    ui::widget::{UpcomingEventsWidgetState, WidgetManagerState},
+};
 
 #[rustfmt::skip]
 #[derive(Debug, Clone, PartialEq, Routable)]
@@ -25,6 +28,7 @@ pub enum Route {
 }
 
 pub fn UI(cx: Scope) -> Element {
+    use_shared_state_provider(cx, || UpcomingEventsWidgetState::default());
     use_shared_state_provider(cx, || WidgetManagerState::default());
     use_shared_state_provider(cx, || Schedule::default());
 

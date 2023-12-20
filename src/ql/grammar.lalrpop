@@ -7,12 +7,12 @@ grammar;
 
 U32: u32 = r"[0-9]+" => u32::from_str(<>).unwrap();
 
-Time: Time = {
-    <hour: U32> ":" <minute: U32> =>? NaiveTime::from_hms_opt(hour, minute, 0).map(|t| Time(t)).ok_or(ParseError::User { error: "invalid time" }),
+pub Time: NaiveTime = {
+    <hour: U32> ":" <minute: U32> =>? NaiveTime::from_hms_opt(hour, minute, 0).ok_or(ParseError::User { error: "invalid time" }),
 }
 
 pub TimePair: TimePair = {
-    <Time> "-" <Time> =>? Ok(TimePair(<>)),
+    <l: Time> "-" <h: Time> =>? Ok(TimePair(Time(l.min(h)), Time(l.max(h)))),
 }
 
 Placeholder: PlaceholderUnit = {

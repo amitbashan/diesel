@@ -9,7 +9,7 @@ mod upcoming;
 
 pub use drawer::{Drawer, DrawerButton};
 pub use time::TimeWidget;
-pub use upcoming::UpcomingEventsWidget;
+pub use upcoming::{UpcomingEventsWidget, UpcomingEventsWidgetState};
 
 use crate::ui::component::GridCell;
 
@@ -24,6 +24,13 @@ const COLS: usize = 8;
 pub enum Widget {
     Time,
     Upcoming,
+}
+
+impl Widget {
+    pub fn component(&self) -> fn(&ScopeState, WidgetSize) -> Element {
+        let i = *self as usize;
+        WIDGETS[i]
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -114,10 +121,6 @@ impl<'a> WidgetDragState<'a> {
 
     pub fn drag(&self) -> UseState<bool> {
         self.drag.clone()
-    }
-
-    pub fn cell_index(&self) -> UseState<Option<usize>> {
-        self.cell_index.clone()
     }
 }
 

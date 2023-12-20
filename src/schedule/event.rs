@@ -1,13 +1,21 @@
 use crate::ql::Predicate;
-use chrono::prelude::*;
+use chrono::{prelude::*, Duration};
 use std::{
     cell::{Cell, RefCell},
     fmt,
     rc::Rc,
 };
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub struct Time(pub NaiveTime);
+
+impl Time {
+    pub fn as_duration(&self) -> Duration {
+        let hour = self.0.hour();
+        let minute = self.0.minute();
+        Duration::hours(hour as i64) + Duration::minutes(minute as i64)
+    }
+}
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

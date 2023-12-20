@@ -173,6 +173,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                                     name: "timepair",
                                     r#type: "text",
                                     placeholder: "h:min-h:min",
+                                    maxlength: 11,
                                     value: time_pair
                                 }
                             }

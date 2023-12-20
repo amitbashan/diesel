@@ -130,6 +130,7 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
                                         class: "input input-sm input-bordered w-full {timespan_input_error_state}",
                                         name: "timepair",
                                         r#type: "text",
+                                        maxlength: 11,
                                         placeholder: "h:min-h:min",
                                     }
                                 }
@@ -174,7 +175,7 @@ fn NewEventModal(cx: Scope, state: UseState<Option<NaiveDate>>) -> Element {
 }
 
 #[component]
-fn EventTitleButton(cx: Scope, i: usize) -> Element {
+pub fn EventTitleButton(cx: Scope, i: usize) -> Element {
     let navigator = use_navigator(cx);
     let schedule = use_shared_state::<Schedule>(cx)?;
     let schedule = schedule.read();
@@ -217,12 +218,12 @@ fn CalendarCard(cx: Scope, date: NaiveDate, modal_state: UseState<Option<NaiveDa
 
     render! {
         div {
-            class: "card card-compact bg-base-100 shadow-xl overflow-clip {bordered}",
+            class: "card bg-base-100 shadow-xl overflow-clip {bordered}",
             ondblclick: move |_| {
                 modal_state.set(Some(*date));
             },
             div {
-                class: "card-body",
+                class: "card-body p-[0.5rem]",
                 div {
                     class: "card-title justify-between",
                     span {
