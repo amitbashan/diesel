@@ -1,11 +1,17 @@
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
-use crate::ui::{component::svg, *};
+use crate::{
+    ui::{
+        component::{svg, Modal, Settings},
+        *,
+    },
+    VERSION,
+};
 
 #[component]
 pub fn Navbar<'a>(cx: Scope<'a>, center: Option<Element<'a>>, end: Option<Element<'a>>) -> Element {
-    let version = env!("CARGO_PKG_VERSION");
+    let settings_modal_state = use_state(cx, || false);
 
     render! {
         div {
@@ -44,7 +50,7 @@ pub fn Navbar<'a>(cx: Scope<'a>, center: Option<Element<'a>>, end: Option<Elemen
                 }
                 span {
                     class: "font-mono text-xs",
-                    "{version}"
+                    VERSION,
                 }
             }
             div {
@@ -76,8 +82,10 @@ pub fn Navbar<'a>(cx: Scope<'a>, center: Option<Element<'a>>, end: Option<Elemen
                             }
                         }
                         li {
-                            Link {
-                                to: Route::Calendar {},
+                            a {
+                                onclick: move |_| {
+                                    settings_modal_state.modify(|s| !s);
+                                },
                                 svg::Gear {},
                                 "Settings",
                             }
@@ -85,6 +93,11 @@ pub fn Navbar<'a>(cx: Scope<'a>, center: Option<Element<'a>>, end: Option<Elemen
                     }
                 }
             }
+        }
+        Modal {
+            class: "h-80 p-2",
+            open: settings_modal_state.clone(),
+            Settings {}
         }
     }
 }
