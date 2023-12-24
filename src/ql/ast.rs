@@ -1,6 +1,7 @@
 use std::fmt;
 
 use chrono::{Datelike, Month, NaiveDate, Weekday};
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
@@ -18,7 +19,7 @@ pub enum TypeError {
 
 pub type TypeResult<T> = Result<T, TypeError>;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlaceholderUnit {
     Weekday,
     Monthday,
@@ -43,7 +44,7 @@ impl fmt::Display for PlaceholderUnit {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Expression {
     Number(u32),
     Placeholder(PlaceholderUnit),
@@ -90,7 +91,7 @@ impl fmt::Display for Expression {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Predicate {
     Equality(Expression, Expression),
 }

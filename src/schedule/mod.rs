@@ -15,6 +15,10 @@ pub struct Schedule {
 }
 
 impl Schedule {
+    pub fn new(events: Vec<Rc<dyn Event>>) -> Self {
+        Self { events }
+    }
+
     pub fn schedule_event(&mut self, event: Rc<dyn Event>) {
         self.events.push(event);
     }

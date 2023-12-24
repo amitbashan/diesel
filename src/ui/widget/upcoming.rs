@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     hook::use_interval,
@@ -10,6 +11,7 @@ use crate::{
 
 use super::WidgetSize;
 
+#[derive(PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct UpcomingEventsWidgetState {
     within: Time,
 }
@@ -60,13 +62,11 @@ pub fn UpcomingEventsWidget(cx: &ScopeState, _: WidgetSize) -> Element {
                     }
                     form {
                         onsubmit: move |e| {
-                            gloo::console::log!("test");
                             let values = &e.data.values;
                             let within_value = &values["within"][0];
                             let within_value = grammar::TimeParser::new().parse(within_value);
 
                             if let Ok(within_value) = within_value {
-                                gloo::console::log!("bruh");
                                 state.with_mut(|s| s.within = Time(within_value));
                             } else {
                                 update();

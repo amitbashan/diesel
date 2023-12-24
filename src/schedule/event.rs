@@ -1,12 +1,13 @@
 use crate::ql::Predicate;
 use chrono::{prelude::*, Duration};
+use serde::{Deserialize, Serialize};
 use std::{
     cell::{Cell, RefCell},
     fmt,
     rc::Rc,
 };
 
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Serialize, Deserialize)]
 pub struct Time(pub NaiveTime);
 
 impl Time {
@@ -23,7 +24,7 @@ impl fmt::Display for Time {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct TimePair(pub Time, pub Time);
 
 impl fmt::Display for TimePair {

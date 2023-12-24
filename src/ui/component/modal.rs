@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use dioxus_router::prelude::*;
 
 #[component]
 pub fn Modal<'a>(
@@ -22,6 +23,38 @@ pub fn Modal<'a>(
                 onclick: move |_| {
                     open.set(false);
                 }
+            }
+        }
+    }
+}
+
+#[component]
+pub fn ErrorModal<'a>(
+    cx: Scope<'a>,
+    action: Option<Element<'a>>,
+    children: Element<'a>,
+) -> Element {
+    render! {
+        dialog {
+            class: "modal modal-open",
+            div {
+                class: "modal-box",
+                article {
+                    class: "prose",
+                    h3 {
+                        "Error"
+                    }
+                    children
+                }
+                div {
+                    class: "modal-action",
+                    if let Some(action) = action {
+                        action
+                    }
+                }
+            }
+            div {
+                class: "modal-backdrop cursor-pointer",
             }
         }
     }

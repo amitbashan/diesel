@@ -1,4 +1,6 @@
-#[derive(Debug, Copy, Clone)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum WidgetSize {
     Small,

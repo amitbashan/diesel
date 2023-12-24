@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use dioxus::prelude::*;
+use serde::{Deserialize, Serialize};
 
 mod drawer;
 mod size;
@@ -19,7 +20,7 @@ pub const WIDGETS: [fn(&ScopeState, WidgetSize) -> Element; 2] = [TimeWidget, Up
 const ROWS: usize = 6;
 const COLS: usize = 8;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum Widget {
     Time,
@@ -33,14 +34,15 @@ impl Widget {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct WidgetDataTransfer {
     pub widget: Widget,
     pub size: WidgetSize,
+    #[serde(skip)]
     pub source_index: Option<usize>,
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct WidgetManagerState {
     cell_to_widget_data: HashMap<usize, WidgetDataTransfer>,
 }

@@ -8,11 +8,16 @@ build = "build.rs"
 
 [dependencies]
 dioxus = { git = "https://github.com/dioxuslabs/dioxus" }
-dioxus-web = { git = "https://github.com/dioxuslabs/dioxus" }
+dioxus-desktop = { git = "https://github.com/dioxuslabs/dioxus" }
 dioxus-router = { git = "https://github.com/DioxusLabs/dioxus" }
-gloo = { version = "*", features = ["futures", "timers"] }
-chrono = "*"
+chrono = { version = "*", features = ["serde"] }
 lalrpop-util = { version = "*", features = ["lexer", "unicode"] }
+serde = { version = "*", features = ["derive"] }
+serde_json = "*"
+dirs = "*"
+async-timers = "*"
+log = "*"
+dioxus-logger = "*"
 
 [build-dependencies]
 lalrpop = "*"

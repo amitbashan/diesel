@@ -1,3 +1,5 @@
+use std::{borrow::Cow, rc::Rc};
+
 pub const THEMES: [&str; 32] = [
     "light",
     "dark",
@@ -34,10 +36,10 @@ pub const THEMES: [&str; 32] = [
 ];
 
 #[derive(Default)]
-pub struct Theme(pub &'static str);
+pub struct Theme(pub Cow<'static, str>);
 
 impl Theme {
     pub fn auto(&mut self) {
-        self.0 = "";
+        self.0 = Cow::Borrowed("");
     }
 }
