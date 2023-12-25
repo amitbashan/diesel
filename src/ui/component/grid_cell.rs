@@ -1,9 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::{
-    hook::with_mut,
-    ui::widget::{WidgetDataTransfer, WidgetDragState, WidgetManagerState, WIDGETS},
-};
+use crate::ui::widget::{WidgetDataTransfer, WidgetDragState, WidgetManagerState, WIDGETS};
 
 #[component]
 pub fn GridCell<'a>(
@@ -57,9 +54,9 @@ pub fn GridCell<'a>(
                 ondrop: move |_| {
                     if let Some(d) = data_transfer.get() {
                         if let Some(s) = d.source_index {
-                            with_mut(cx, wms, |wms| wms.move_widget(*cell_index, &s));
+                            wms.with_mut(|wms| wms.move_widget(*cell_index, &s));
                         } else {
-                            with_mut(cx, wms, |wms| wms.add_widget(*cell_index, *d));
+                            wms.with_mut(|wms| wms.add_widget(*cell_index, *d));
                         }
                         data_transfer.set(None);
                     }

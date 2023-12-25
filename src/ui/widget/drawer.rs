@@ -94,7 +94,6 @@ pub fn Drawer<'a>(
                 div {
                     class: "w-92 min-h-full p-4 bg-base-200",
                     make_preview_container(Widget::Time, [true, true, true]),
-                    make_preview_container(Widget::Upcoming, [false, true, true]),
                 }
             }
         }

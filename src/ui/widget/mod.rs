@@ -6,17 +6,15 @@ use serde::{Deserialize, Serialize};
 mod drawer;
 mod size;
 mod time;
-mod upcoming;
 
 pub use drawer::{Drawer, DrawerButton};
 pub use time::TimeWidget;
-pub use upcoming::{UpcomingEventsWidget, UpcomingEventsWidgetState};
 
 use crate::ui::component::GridCell;
 
 pub use size::WidgetSize;
 
-pub const WIDGETS: [fn(&ScopeState, WidgetSize) -> Element; 2] = [TimeWidget, UpcomingEventsWidget];
+pub const WIDGETS: [fn(&ScopeState, WidgetSize) -> Element; 1] = [TimeWidget];
 const ROWS: usize = 6;
 const COLS: usize = 8;
 
@@ -24,7 +22,6 @@ const COLS: usize = 8;
 #[repr(u8)]
 pub enum Widget {
     Time,
-    Upcoming,
 }
 
 impl Widget {

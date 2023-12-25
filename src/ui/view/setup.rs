@@ -1,8 +1,11 @@
+use std::{fs, io};
+
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
 use crate::{
-    configuration::{Configuration, ConfigurationPath},
+    configuration::{Configuration, ConfigurationManager},
+    hook::use_save,
     ui::{
         component::{ErrorModal, ThemeDropdown},
         Route,
@@ -11,12 +14,11 @@ use crate::{
 
 pub fn Setup(cx: Scope) -> Element {
     let navigator = use_navigator(cx);
-    let cfg_path_state = use_shared_state::<ConfigurationPath>(cx)?;
-    let path = cfg_path_state.read();
-    let path = &path.0;
+    let cfg_manager = use_shared_state::<ConfigurationManager>(cx)?;
+    let path = &cfg_manager.read().path;
     let update = cx.schedule_update();
     let reset = move || {
-        cfg_path_state.with_mut(|s| s.0 = None);
+        cfg_manager.with_mut(|s| s.path = None);
         update();
     };
 
@@ -80,7 +82,7 @@ pub fn Setup(cx: Scope) -> Element {
                                     let files = file_engine.files();
                                     if files.len() > 0 {
                                         let file = file_engine.files().remove(0);
-                                        cfg_path_state.with_mut(|s| s.0 = Some(file));
+                                        cfg_manager.with_mut(|s| s.path = Some(file));
                                     }
                                 }
                             },
@@ -109,7 +111,8 @@ pub fn Setup(cx: Scope) -> Element {
 
 pub fn New(cx: Scope) -> Element {
     let navigator = use_navigator(cx);
-    let cfg_path_state = use_shared_state::<ConfigurationPath>(cx)?;
+    let save = use_save(cx);
+    let cfg_manager = use_shared_state::<ConfigurationManager>(cx)?;
     let page = use_state(cx, || 0);
     let path_state = use_state(cx, || None::<String>);
     let view = match page.get() {
@@ -154,8 +157,9 @@ pub fn New(cx: Scope) -> Element {
         },
         2 => {
             let path = path_state.get().as_ref().unwrap();
-            cfg_path_state.with_mut(|s| s.0 = Some(path.clone()));
-            Configuration::save(cx);
+            fs::File::create(path).expect("failed to create configuration");
+            cfg_manager.with_mut(|s| s.path = Some(path.clone()));
+            save();
             navigator.push(Route::Setup {});
             None
         }

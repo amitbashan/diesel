@@ -104,22 +104,16 @@ impl Configuration {
         schedule.with_mut(|s| *s = self.schedule.parse());
     }
 
-    pub fn save(cx: &ScopeState) -> Self {
-        Self::try_save(cx).expect("failed to save configuration")
-    }
-
-    pub fn try_save(cx: &ScopeState) -> io::Result<Self> {
-        let theme = use_shared_state::<Theme>(cx).expect("theme state not initialized");
-        let widget_manager_state = use_shared_state::<WidgetManagerState>(cx)
-            .expect("widget manager state not initialized");
-        let widget_states =
-            use_shared_state::<WidgetStates>(cx).expect("widget states not initialized");
-        let schedule =
-            use_shared_state::<schedule::Schedule>(cx).expect("schedule not initialized");
-        let cfg_path = use_shared_state::<ConfigurationPath>(cx)
-            .expect("configuration path state not initialized");
-        let cfg_path = cfg_path.read();
-        let cfg_path = cfg_path.0.as_ref().expect("configuration path not set");
+    pub fn try_save(cfg_manager: &UseSharedState<ConfigurationManager>) -> io::Result<Self> {
+        let cfg_manager = cfg_manager.read();
+        let theme = &cfg_manager.theme;
+        let widget_manager_state = &cfg_manager.widget_manager_state;
+        let widget_states = &cfg_manager.widget_states;
+        let schedule = &cfg_manager.schedule;
+        let cfg_path = cfg_manager
+            .path
+            .as_ref()
+            .expect("configuration path not set");
         let cfg = Self {
             theme: theme.with(|t| t.0.to_string()),
             widget_manager_state: widget_manager_state.with(|s| s.clone()),
@@ -132,5 +126,10 @@ impl Configuration {
     }
 }
 
-#[derive(Default)]
-pub struct ConfigurationPath(pub Option<String>);
+pub struct ConfigurationManager {
+    pub path: Option<String>,
+    pub theme: UseSharedState<Theme>,
+    pub widget_manager_state: UseSharedState<WidgetManagerState>,
+    pub widget_states: UseSharedState<WidgetStates>,
+    pub schedule: UseSharedState<schedule::Schedule>,
+}

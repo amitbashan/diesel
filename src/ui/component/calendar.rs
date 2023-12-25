@@ -6,7 +6,6 @@ use dioxus_router::prelude::*;
 
 use super::Modal;
 use crate::{
-    hook::with_mut,
     ql::*,
     schedule::{event::Event, *},
     ui::{
@@ -80,7 +79,7 @@ fn NewEventModal(cx: Scope, open: UseState<bool>, state: UseState<Option<NaiveDa
                         let title = title.clone();
                         let description = values["description"][0].clone();
                         let event = Event::new(title, description, predicate, time_pair);
-                        with_mut(cx, schedule, |s| s.schedule_event(Rc::new(event)));
+                        schedule.with_mut(|s| s.schedule_event(Rc::new(event)));
                         reset_state();
                     }
                 },

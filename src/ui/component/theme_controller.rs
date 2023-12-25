@@ -2,10 +2,7 @@ use std::borrow::Cow;
 
 use dioxus::prelude::*;
 
-use crate::{
-    hook::with_mut,
-    ui::{Theme, THEMES},
-};
+use crate::ui::{Theme, THEMES};
 
 #[component]
 pub fn ThemeCard(cx: Scope, theme: &'static str) -> Element {
@@ -21,7 +18,7 @@ pub fn ThemeCard(cx: Scope, theme: &'static str) -> Element {
                 class: "text-base-content w-full cursor-pointer font-sans bg-base-100",
                 "data-theme": *theme,
                 onclick: move |_| {
-                    with_mut(cx, theme_state, |s| s.0 = Cow::Borrowed(theme));
+                    theme_state.with_mut(|s| s.0 = Cow::Borrowed(theme));
                 },
                 div {
                     class: "grid grid-cols-5 grid-rows-3",
@@ -79,7 +76,7 @@ pub fn ThemeDropdown(cx: Scope) -> Element {
             button {
                 class: "outline-base-content text-start",
                 onclick: move |_| {
-                    with_mut(cx, theme_state, |s| s.0 = Cow::Borrowed(theme));
+                    theme_state.with_mut(|s| s.0 = Cow::Borrowed(theme));
                 },
                 span {
                     class: "rounded-btn text-base-context block w-full cursor-pointer font-sans",
