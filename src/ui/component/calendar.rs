@@ -177,7 +177,7 @@ pub fn EventTitleButton(cx: Scope, i: usize) -> Element {
 
     render! {
         button {
-            class: "join-item w-full btn btn-xxs btn-outline justify-start",
+            class: "join-item w-full btn btn-outline justify-start h-5 min-h-5 pl-2 pr-2",
             onclick: move |_| {
                 navigator.push(Route::EventInstance { i: *i });
             },

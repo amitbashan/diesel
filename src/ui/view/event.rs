@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
 use crate::{
+    hook::with_mut,
     ql::grammar,
     schedule::*,
     ui::{
@@ -117,7 +118,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                         }
                         let title = title.clone();
                         let description = values["description"][0].clone();
-                        schedule.with_mut(|s| s.edit_event(*i, Some(title), Some(description), Some(predicate), Some(time_pair)));
+                        with_mut(cx, schedule, |s| s.edit_event(*i, Some(title), Some(description), Some(predicate), Some(time_pair)));
                         reset_state();
                     }
                 },

@@ -38,7 +38,6 @@ fn App(cx: Scope) -> Element {
     let theme = use_shared_state::<Theme>(cx)?.with(|t| t.0.to_string());
 
     render! {
-        style { include_str!("./css/extra.css") }
         style { include_str!("./css/tailwind.css") }
         div {
             "data-theme": theme,
