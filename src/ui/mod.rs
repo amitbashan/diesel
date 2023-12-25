@@ -9,10 +9,7 @@ pub mod widget;
 pub use theme::*;
 use view::*;
 
-use crate::{
-    schedule::Schedule,
-    ui::widget::{UpcomingEventsWidgetState, WidgetManagerState},
-};
+use view::setup::New;
 
 #[rustfmt::skip]
 #[derive(Debug, Clone, PartialEq, Routable)]
@@ -24,6 +21,10 @@ pub enum Route {
         #[end_layout]
     #[end_nest]
     #[route("/")]
+    Setup {},
+    #[route("/new")]
+    New {},
+    #[route("/home")]
     Index {},
     #[route("/calendar")]
     Calendar {},
@@ -31,8 +32,6 @@ pub enum Route {
 
 pub fn UI(cx: Scope) -> Element {
     render! {
-        div {
-            Router::<Route> {}
-        }
+        Router::<Route> {}
     }
 }

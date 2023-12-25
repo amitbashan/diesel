@@ -42,7 +42,7 @@ pub struct WidgetDataTransfer {
     pub source_index: Option<usize>,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 pub struct WidgetManagerState {
     cell_to_widget_data: HashMap<usize, WidgetDataTransfer>,
 }
@@ -125,6 +125,9 @@ impl<'a> WidgetDragState<'a> {
         self.drag.clone()
     }
 }
+
+#[derive(Default, Clone)]
+pub struct WidgetStates(pub HashMap<String, HashMap<String, String>>);
 
 #[component]
 pub fn WidgetManager<'a>(

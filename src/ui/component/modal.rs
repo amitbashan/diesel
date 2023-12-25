@@ -1,5 +1,4 @@
 use dioxus::prelude::*;
-use dioxus_router::prelude::*;
 
 #[component]
 pub fn Modal<'a>(
@@ -32,7 +31,8 @@ pub fn Modal<'a>(
 pub fn ErrorModal<'a>(
     cx: Scope<'a>,
     action: Option<Element<'a>>,
-    children: Element<'a>,
+    description: &'a str,
+    error: Option<String>,
 ) -> Element {
     render! {
         dialog {
@@ -44,7 +44,15 @@ pub fn ErrorModal<'a>(
                     h3 {
                         "Error"
                     }
-                    children
+                    p { description }
+                    if let Some(e) = error {
+                        render! {
+                            div {
+                                class: "border border-error font-mono bg-base-300",
+                                "{e}"
+                            }
+                        }
+                    }
                 }
                 div {
                     class: "modal-action",

@@ -2,28 +2,32 @@ pub mod event;
 
 use std::rc::Rc;
 
-pub use event::SkeletonEvent;
+pub use event::Event;
 
 use chrono::prelude::*;
-pub use event::{Event, TimePair};
+pub use event::TimePair;
 
 use crate::ql::{Context, Evaluate, Predicate};
 
 #[derive(Default)]
 pub struct Schedule {
-    events: Vec<Rc<dyn Event>>,
+    events: Vec<Rc<Event>>,
 }
 
 impl Schedule {
-    pub fn new(events: Vec<Rc<dyn Event>>) -> Self {
+    pub fn new(events: Vec<Rc<Event>>) -> Self {
         Self { events }
     }
 
-    pub fn schedule_event(&mut self, event: Rc<dyn Event>) {
+    pub fn events(&self) -> &Vec<Rc<Event>> {
+        &self.events
+    }
+
+    pub fn schedule_event(&mut self, event: Rc<Event>) {
         self.events.push(event);
     }
 
-    pub fn cancel_event(&mut self, i: usize) -> Option<Rc<dyn Event>> {
+    pub fn cancel_event(&mut self, i: usize) -> Option<Rc<Event>> {
         (self.events.len() > i).then_some(self.events.remove(i))
     }
 
@@ -58,14 +62,11 @@ impl Schedule {
         }
     }
 
-    pub fn get_event(&self, i: usize) -> Option<&Rc<dyn Event>> {
+    pub fn get_event(&self, i: usize) -> Option<&Rc<Event>> {
         self.events.get(i)
     }
 
-    pub fn get_events_on_date(
-        &self,
-        date: NaiveDate,
-    ) -> impl Iterator<Item = (usize, &Rc<dyn Event>)> {
+    pub fn get_events_on_date(&self, date: NaiveDate) -> impl Iterator<Item = (usize, &Rc<Event>)> {
         let context = Context { date };
         self.events.iter().enumerate().filter(move |(_, event)| {
             let predicate = event.predicate().get();

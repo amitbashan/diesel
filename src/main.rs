@@ -1,14 +1,16 @@
 #![allow(non_snake_case)]
 
-use std::{io, path::PathBuf};
-
-use configuration::HomeConfiguration;
 use dioxus::prelude::*;
 use dioxus_desktop::{Config, WindowBuilder};
-use dioxus_router::prelude::*;
-use log::info;
 
-use crate::ui::{component::ErrorModal, Theme};
+use crate::{
+    configuration::ConfigurationPath,
+    schedule::Schedule,
+    ui::{
+        widget::{WidgetManagerState, WidgetStates},
+        Theme,
+    },
+};
 
 mod configuration;
 mod hook;
@@ -19,9 +21,7 @@ mod ui;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    HomeConfiguration::default()
-        .create_if_does_not_exist()
-        .expect("failed to create home configuration");
+    dioxus_logger::init(log::LevelFilter::Info).expect("failed to init logger");
     dioxus_desktop::launch_cfg(
         App,
         Config::default().with_window(WindowBuilder::new().with_title("Diesel")),
@@ -29,23 +29,20 @@ fn main() {
 }
 
 fn App(cx: Scope) -> Element {
-    let home_configuration = use_state(cx, HomeConfiguration::read);
+    use_shared_state_provider(cx, Theme::default);
+    use_shared_state_provider(cx, WidgetManagerState::default);
+    use_shared_state_provider(cx, WidgetStates::default);
+    use_shared_state_provider(cx, Schedule::default);
+    use_shared_state_provider(cx, ConfigurationPath::default);
 
-    match home_configuration.get() {
-        Ok(Some(cfg)) => render! {
-            "cfg"
-        },
-        Ok(_) => render! {
-            ErrorModal {
-                p { "Failed to deserialize" }
-            }
-        },
-        Err(e) => render! {
-            render! {
-                ErrorModal {
-                    p { "{e}" }
-                }
-            }
-        },
+    let theme = use_shared_state::<Theme>(cx)?.with(|t| t.0.to_string());
+
+    render! {
+        style { include_str!("./css/extra.css") }
+        style { include_str!("./css/tailwind.css") }
+        div {
+            "data-theme": theme,
+            ui::UI {}
+        }
     }
 }

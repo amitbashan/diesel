@@ -1,4 +1,4 @@
-use std::{borrow::Cow, rc::Rc};
+use std::borrow::Cow;
 
 pub const THEMES: [&str; 32] = [
     "light",

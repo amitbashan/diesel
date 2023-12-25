@@ -1,33 +1,63 @@
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
-use crate::ui::{
-    self,
-    component::{ErrorModal, ThemeDropdown},
-    Theme,
+use crate::{
+    configuration::{Configuration, ConfigurationPath},
+    ui::{
+        component::{ErrorModal, ThemeDropdown},
+        Route,
+    },
 };
 
-#[rustfmt::skip]
-#[derive(Clone, Debug, PartialEq, Routable)]
-enum Route {
-    #[route("/")]
-    Index {},
-    #[route("/new")]
-    New {},
-}
-
 pub fn Setup(cx: Scope) -> Element {
-    render! {
-        Router::<Route> {}
-    }
-}
+    let navigator = use_navigator(cx);
+    let cfg_path_state = use_shared_state::<ConfigurationPath>(cx)?;
+    let path = cfg_path_state.read();
+    let path = &path.0;
+    let update = cx.schedule_update();
+    let reset = move || {
+        cfg_path_state.with_mut(|s| s.0 = None);
+        update();
+    };
 
-fn Index(cx: Scope) -> Element {
-    let cfg_input = use_state(cx, || None::<String>);
+    if let Some(path) = path {
+        let cfg = Configuration::import(path);
 
-    if let Some(path) = cfg_input.get() {
-        render! {
-            "wip",
+        match cfg {
+            Ok(Some(cfg)) => {
+                cfg.load(cx);
+                navigator.push(Route::Index {});
+                None
+            }
+            Ok(_) => render! {
+                ErrorModal {
+                    action: render! {
+                        button {
+                            class: "btn",
+                            onclick: move |_| {
+                                reset();
+                            },
+                            "Setup"
+                        }
+                    },
+                    description: "Failed to read user configuration.",
+                }
+            },
+            Err(e) => render! {
+                ErrorModal {
+                    action: render! {
+                        button {
+                            class: "btn",
+                            onclick: move |_| {
+                                reset();
+                            },
+                            "Setup"
+                        }
+                    },
+                    description: "Encountered an I/O error while trying to read user configuration:",
+                    error: e.to_string(),
+                }
+            },
         }
     } else {
         render! {
@@ -50,7 +80,7 @@ fn Index(cx: Scope) -> Element {
                                     let files = file_engine.files();
                                     if files.len() > 0 {
                                         let file = file_engine.files().remove(0);
-                                        cfg_input.set(Some(file));
+                                        cfg_path_state.with_mut(|s| s.0 = Some(file));
                                     }
                                 }
                             },
@@ -77,10 +107,11 @@ fn Index(cx: Scope) -> Element {
     }
 }
 
-fn New(cx: Scope) -> Element {
+pub fn New(cx: Scope) -> Element {
+    let navigator = use_navigator(cx);
+    let cfg_path_state = use_shared_state::<ConfigurationPath>(cx)?;
     let page = use_state(cx, || 0);
     let path_state = use_state(cx, || None::<String>);
-    let theme_state = use_shared_state::<Theme>(cx)?;
     let view = match page.get() {
         0 => render! {
             form {
@@ -121,34 +152,36 @@ fn New(cx: Scope) -> Element {
                 }
             }
         },
-        2 => None,
+        2 => {
+            let path = path_state.get().as_ref().unwrap();
+            cfg_path_state.with_mut(|s| s.0 = Some(path.clone()));
+            Configuration::save(cx);
+            navigator.push(Route::Setup {});
+            None
+        }
         _ => None,
     };
 
-    if *page.get() == 3 {
-        ui::UI(cx)
-    } else {
-        render! {
+    render! {
+        div {
+            class: "flex flex-1 justify-center items-center h-screen",
             div {
-                class: "flex flex-1 justify-center items-center h-screen",
-                div {
-                    class: "flex flex-col w-full gap-4",
-                    p {
-                        class: "font-bold text-center sm:text-2xl md:text-4xl lg:text-6xl mb-4",
-                        "Setup"
-                    }
-                    view,
-                    if *page.get() > 0 {
-                        render! {
-                            div {
-                                class: "flex justify-center items-center",
-                                button {
-                                    class: "btn btn-outline btn-sm join-item",
-                                    onclick: move |_| {
-                                        page.modify(|p| p - 1);
-                                    },
-                                    "←"
-                                }
+                class: "flex flex-col w-full gap-4",
+                p {
+                    class: "font-bold text-center sm:text-2xl md:text-4xl lg:text-6xl mb-4",
+                    "Setup"
+                }
+                view,
+                if *page.get() > 0 {
+                    render! {
+                        div {
+                            class: "flex justify-center items-center",
+                            button {
+                                class: "btn btn-outline btn-sm join-item",
+                                onclick: move |_| {
+                                    page.modify(|p| p - 1);
+                                },
+                                "←"
                             }
                         }
                     }

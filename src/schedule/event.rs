@@ -3,6 +3,7 @@ use chrono::{prelude::*, Duration};
 use serde::{Deserialize, Serialize};
 use std::{
     cell::{Cell, RefCell},
+    collections::HashMap,
     fmt,
     rc::Rc,
 };
@@ -33,21 +34,14 @@ impl fmt::Display for TimePair {
     }
 }
 
-pub trait Event {
-    fn title(&self) -> Rc<RefCell<String>>;
-    fn description(&self) -> Rc<RefCell<String>>;
-    fn predicate(&self) -> Rc<Cell<Predicate>>;
-    fn time_pair(&self) -> Rc<Cell<TimePair>>;
-}
-
-pub struct SkeletonEvent {
-    pub title: Rc<RefCell<String>>,
-    pub description: Rc<RefCell<String>>,
+pub struct Event {
+    title: Rc<RefCell<String>>,
+    description: Rc<RefCell<String>>,
     predicate: Rc<Cell<Predicate>>,
     time_pair: Rc<Cell<TimePair>>,
 }
 
-impl SkeletonEvent {
+impl Event {
     pub fn new(
         title: String,
         description: String,
@@ -61,22 +55,20 @@ impl SkeletonEvent {
             time_pair: Rc::new(Cell::new(time_pair)),
         }
     }
-}
 
-impl Event for SkeletonEvent {
-    fn title(&self) -> Rc<RefCell<String>> {
+    pub fn title(&self) -> Rc<RefCell<String>> {
         self.title.clone()
     }
 
-    fn description(&self) -> Rc<RefCell<String>> {
+    pub fn description(&self) -> Rc<RefCell<String>> {
         self.description.clone()
     }
 
-    fn predicate(&self) -> Rc<Cell<Predicate>> {
+    pub fn predicate(&self) -> Rc<Cell<Predicate>> {
         self.predicate.clone()
     }
 
-    fn time_pair(&self) -> Rc<Cell<TimePair>> {
+    pub fn time_pair(&self) -> Rc<Cell<TimePair>> {
         self.time_pair.clone()
     }
 }

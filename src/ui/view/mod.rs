@@ -1,7 +1,7 @@
 mod calendar;
 pub mod event;
 mod index;
-mod setup;
+pub mod setup;
 
 pub use calendar::Calendar;
 pub use event::{Event, EventInstance};
