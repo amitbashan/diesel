@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 mod drawer;
 mod size;
 mod time;
+pub mod weather;
 
 pub use drawer::{Drawer, DrawerButton};
 pub use time::TimeWidget;
@@ -14,24 +15,27 @@ use crate::ui::component::GridCell;
 
 pub use size::WidgetSize;
 
-pub const WIDGETS: [fn(&ScopeState, WidgetSize) -> Element; 1] = [TimeWidget];
-const ROWS: usize = 6;
-const COLS: usize = 8;
+use self::weather::{WeatherWidget, WeatherWidgetState};
+
+type WidgetComponent = fn(&ScopeState, WidgetSize, UseSharedState<WidgetStates>) -> Element;
+
+pub const WIDGETS: [WidgetComponent; 2] = [TimeWidget, WeatherWidget];
+const ROWS: usize = 5;
+const COLS: usize = 5;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-#[repr(u8)]
 pub enum Widget {
     Time,
+    Weather,
 }
 
 impl Widget {
-    pub fn component(&self) -> fn(&ScopeState, WidgetSize) -> Element {
-        let i = *self as usize;
-        WIDGETS[i]
+    pub fn component(&self) -> WidgetComponent {
+        WIDGETS[*self as usize]
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct WidgetDataTransfer {
     pub widget: Widget,
     pub size: WidgetSize,
@@ -123,8 +127,10 @@ impl<'a> WidgetDragState<'a> {
     }
 }
 
-#[derive(Default, Clone)]
-pub struct WidgetStates(pub HashMap<String, HashMap<String, String>>);
+#[derive(Default, Serialize, Deserialize, Clone)]
+pub struct WidgetStates {
+    weather: WeatherWidgetState,
+}
 
 #[component]
 pub fn WidgetManager<'a>(
@@ -136,7 +142,7 @@ pub fn WidgetManager<'a>(
     let occupied_cells: HashSet<_> = wms.occupied_cells(false).collect();
     let cells = (0..ROWS * COLS).filter_map(|i| {
         (!occupied_cells.contains(&i)).then_some({
-            let wd = wms.cell_to_widget_data.get(&i).copied();
+            let wd = wms.cell_to_widget_data.get(&i).cloned();
             render! {
                 GridCell {
                     drag_state: drag_state.clone(),
@@ -150,8 +156,7 @@ pub fn WidgetManager<'a>(
 
     render! {
         div {
-            // grid-rows-6 and grid-cols-8 instead of grid-rows-{ROWS} and grid-cols-{COLS} because of Tailwind.
-            class: "grid grid-rows-6 grid-cols-8 p-2 gap-1 items-start rounded flex-1 bg-base-200",
+            class: "grid grid-rows-5 grid-cols-5 p-2 gap-1 items-start rounded flex-1 bg-base-200",
             cells,
         }
     }

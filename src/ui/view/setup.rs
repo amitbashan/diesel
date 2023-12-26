@@ -1,4 +1,4 @@
-use std::{fs, io};
+use std::fs;
 
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;

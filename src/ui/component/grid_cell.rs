@@ -1,6 +1,8 @@
 use dioxus::prelude::*;
 
-use crate::ui::widget::{WidgetDataTransfer, WidgetDragState, WidgetManagerState, WIDGETS};
+use crate::ui::widget::{
+    WidgetDataTransfer, WidgetDragState, WidgetManagerState, WidgetStates, WIDGETS,
+};
 
 #[component]
 pub fn GridCell<'a>(
@@ -14,6 +16,7 @@ pub fn GridCell<'a>(
     const DRAG_OPACITY: u8 = 25;
     let class = class.unwrap_or_default();
     let wms = use_shared_state::<WidgetManagerState>(cx)?;
+    let widget_states = use_shared_state::<WidgetStates>(cx)?;
 
     if let Some(mut wdt) = widget_data {
         let widget = WIDGETS[wdt.widget as usize];
@@ -37,7 +40,7 @@ pub fn GridCell<'a>(
                     data_transfer.set(None);
                     drag_state.drag.set(false);
                 },
-                widget(cx, wdt.size),
+                widget(cx, wdt.size, widget_states.clone()),
             }
         }
     } else {

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, collections::HashMap, fs, io, path::Path, rc::Rc};
+use std::{borrow::Cow, fs, io, path::Path, rc::Rc};
 
 use crate::{
     ql::grammar,
@@ -74,11 +74,11 @@ impl From<&schedule::Schedule> for Schedule {
     }
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Configuration {
     theme: String,
     widget_manager_state: WidgetManagerState,
-    widget_states: HashMap<String, HashMap<String, String>>,
+    widget_states: WidgetStates,
     schedule: Schedule,
 }
 
@@ -100,7 +100,7 @@ impl Configuration {
 
         theme.with_mut(|t| t.0 = Cow::Owned(self.theme));
         widget_manager_state.with_mut(|s| *s = self.widget_manager_state);
-        widget_states.with_mut(|s| s.0 = self.widget_states);
+        widget_states.with_mut(|s| *s = self.widget_states);
         schedule.with_mut(|s| *s = self.schedule.parse());
     }
 
@@ -117,7 +117,7 @@ impl Configuration {
         let cfg = Self {
             theme: theme.with(|t| t.0.to_string()),
             widget_manager_state: widget_manager_state.with(|s| s.clone()),
-            widget_states: widget_states.with(|s| s.0.clone()),
+            widget_states: widget_states.with(|s| s.clone()),
             schedule: schedule.with(|s| s.into()),
         };
         let vec = serde_json::to_vec(&cfg).expect("failed to serialize configuration");

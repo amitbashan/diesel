@@ -3,9 +3,13 @@ use dioxus::prelude::*;
 
 use crate::hook::use_interval;
 
-use super::WidgetSize;
+use super::{WidgetSize, WidgetStates};
 
-pub fn TimeWidget(cx: &ScopeState, widget_size: WidgetSize) -> Element {
+pub fn TimeWidget(
+    cx: &ScopeState,
+    widget_size: WidgetSize,
+    _: UseSharedState<WidgetStates>,
+) -> Element {
     use_interval(cx, std::time::Duration::new(1, 0));
     let time = chrono::Local::now();
     let h = time.hour();

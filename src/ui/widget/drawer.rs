@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 
 use super::{Widget, WidgetDataTransfer, WidgetDragState, WidgetManagerState};
-use crate::ui::component::svg;
+use crate::ui::{component::svg, widget::WidgetStates};
 
 #[component]
 fn PreviewContainer<'a>(
@@ -37,6 +37,7 @@ pub fn Drawer<'a>(
     drag: UseState<bool>,
     children: Element<'a>,
 ) -> Element {
+    let widget_states = use_shared_state::<WidgetStates>(cx)?;
     let make_preview_container = |widget: Widget, sizes: [bool; 3]| {
         let w = widget.component();
         let containers = sizes
@@ -49,7 +50,7 @@ pub fn Drawer<'a>(
                         data_transfer: data_transfer.clone(),
                         drag: drag.clone(),
                         widget_data: WidgetDataTransfer { widget, size, source_index: None },
-                        w(cx, size)
+                        w(cx, size, widget_states.clone())
                     }
                 }
             });
@@ -61,7 +62,7 @@ pub fn Drawer<'a>(
                     "{widget:?}"
                 }
                 div {
-                    class: "carousel carousel-center max-w-xs items-center p-4 space-x-4 bg-neutral rounded-box",
+                    class: "carousel carousel-center w-full max-w-xs items-center p-4 space-x-4 bg-neutral rounded-box",
                     containers
                 },
             }
@@ -94,6 +95,7 @@ pub fn Drawer<'a>(
                 div {
                     class: "w-92 min-h-full p-4 bg-base-200",
                     make_preview_container(Widget::Time, [true, true, true]),
+                    make_preview_container(Widget::Weather, [true, false, false]),
                 }
             }
         }
