@@ -126,7 +126,7 @@ pub fn New(cx: Scope) -> Element {
                     page.modify(|p| p + 1);
                 },
                 input {
-                    class: "input input-bordered w-full sm:max-w-md lg:max-w-lg",
+                    class: "input input-bordered w-full font-mono sm:max-w-md lg:max-w-lg",
                     name: "path",
                     r#type: "text",
                     placeholder: "Enter path for user configuration…"

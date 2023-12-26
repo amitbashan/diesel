@@ -23,7 +23,7 @@ pub fn GridCell<'a>(
         let sc = wdt.size.class();
         render! {
             div {
-                class: "relative group flex flex-1 h-full rounded-lg shadow-xl {sc} {class}",
+                class: "relative group flex flex-1 h-full rounded-lg shadow-xl max-h-full {sc} {class}",
                 draggable: true,
                 prevent_default: "ondragover",
                 ondragover: move |e| {
@@ -40,7 +40,7 @@ pub fn GridCell<'a>(
                     data_transfer.set(None);
                     drag_state.drag.set(false);
                 },
-                widget(cx, wdt.size, widget_states.clone()),
+                widget(cx, wdt.size, widget_states),
             }
         }
     } else {

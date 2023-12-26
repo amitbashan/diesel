@@ -17,11 +17,12 @@ pub use size::WidgetSize;
 
 use self::weather::{WeatherWidget, WeatherWidgetState};
 
-type WidgetComponent = fn(&ScopeState, WidgetSize, UseSharedState<WidgetStates>) -> Element;
+type WidgetComponent =
+    for<'a> fn(&'a ScopeState, WidgetSize, &'a UseSharedState<WidgetStates>) -> Element<'a>;
 
 pub const WIDGETS: [WidgetComponent; 2] = [TimeWidget, WeatherWidget];
 const ROWS: usize = 5;
-const COLS: usize = 5;
+const COLS: usize = 7;
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Widget {
@@ -156,7 +157,7 @@ pub fn WidgetManager<'a>(
 
     render! {
         div {
-            class: "grid grid-rows-5 grid-cols-5 p-2 gap-1 items-start rounded flex-1 bg-base-200",
+            class: "grid grid-rows-5 grid-cols-7 p-2 gap-1 items-start rounded flex-1 bg-base-200",
             cells,
         }
     }

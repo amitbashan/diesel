@@ -5,11 +5,11 @@ use crate::hook::use_interval;
 
 use super::{WidgetSize, WidgetStates};
 
-pub fn TimeWidget(
-    cx: &ScopeState,
+pub fn TimeWidget<'a>(
+    cx: &'a ScopeState,
     widget_size: WidgetSize,
-    _: UseSharedState<WidgetStates>,
-) -> Element {
+    _: &'a UseSharedState<WidgetStates>,
+) -> Element<'a> {
     use_interval(cx, std::time::Duration::new(1, 0));
     let time = chrono::Local::now();
     let h = time.hour();

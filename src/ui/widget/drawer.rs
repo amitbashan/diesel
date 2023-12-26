@@ -50,7 +50,7 @@ pub fn Drawer<'a>(
                         data_transfer: data_transfer.clone(),
                         drag: drag.clone(),
                         widget_data: WidgetDataTransfer { widget, size, source_index: None },
-                        w(cx, size, widget_states.clone())
+                        w(cx, size, widget_states)
                     }
                 }
             });
