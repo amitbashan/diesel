@@ -42,6 +42,7 @@ fn NewEventModal(cx: Scope, open: UseState<bool>, state: UseState<Option<NaiveDa
         Expression::Placeholder(PlaceholderUnit::Date),
         Expression::Date(date),
     );
+    let predicate_placeholder = predicate_expression.to_string();
 
     render! {
         Modal {
@@ -55,14 +56,14 @@ fn NewEventModal(cx: Scope, open: UseState<bool>, state: UseState<Option<NaiveDa
                     let values = &e.data.values;
                     let predicate = &values["predicate"][0];
                     let predicate = if predicate.is_empty() {
-                        Ok(predicate_expression)
+                        Some(predicate_expression.clone())
                     } else {
-                        grammar::PredicateParser::new().parse(predicate.as_str())
+                        grammar::ExpressionParser::new().parse(predicate.as_str()).ok().map(|p| p.as_predicate()).flatten()
                     };
                     let time_pair = &values["timepair"][0];
                     let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
 
-                    if predicate.is_err() {
+                    if predicate.is_none() {
                         set_error_state(PREDICATE_ERROR_STATE);
                     }
 
@@ -70,7 +71,7 @@ fn NewEventModal(cx: Scope, open: UseState<bool>, state: UseState<Option<NaiveDa
                         set_error_state(TIMESPAN_ERROR_STATE);
                     }
 
-                    if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
+                    if let (Some(predicate), Ok(time_pair)) = (predicate, time_pair) {
                         let title = &values["title"][0];
                         if title.is_empty() {
                             set_error_state(TITLE_ERROR_STATE);
@@ -100,7 +101,7 @@ fn NewEventModal(cx: Scope, open: UseState<bool>, state: UseState<Option<NaiveDa
                                 class: "input input-sm input-bordered font-mono w-full {predicate_input_error_state}",
                                 name: "predicate",
                                 r#type: "text",
-                                placeholder: predicate_expression.to_string(),
+                                placeholder: predicate_placeholder,
                             }
                         }
                         div {

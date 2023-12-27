@@ -36,7 +36,7 @@ impl fmt::Display for TimePair {
 pub struct Event {
     title: Rc<RefCell<String>>,
     description: Rc<RefCell<String>>,
-    predicate: Rc<Cell<Predicate>>,
+    predicate: Rc<RefCell<Predicate>>,
     time_pair: Rc<Cell<TimePair>>,
 }
 
@@ -50,7 +50,7 @@ impl Event {
         Self {
             title: Rc::new(RefCell::new(title)),
             description: Rc::new(RefCell::new(description)),
-            predicate: Rc::new(Cell::new(predicate)),
+            predicate: Rc::new(RefCell::new(predicate)),
             time_pair: Rc::new(Cell::new(time_pair)),
         }
     }
@@ -63,7 +63,7 @@ impl Event {
         self.description.clone()
     }
 
-    pub fn predicate(&self) -> Rc<Cell<Predicate>> {
+    pub fn predicate(&self) -> Rc<RefCell<Predicate>> {
         self.predicate.clone()
     }
 

@@ -69,8 +69,9 @@ impl Schedule {
     pub fn get_events_on_date(&self, date: NaiveDate) -> impl Iterator<Item = (usize, &Rc<Event>)> {
         let context = Context { date };
         self.events.iter().enumerate().filter(move |(_, event)| {
-            let predicate = event.predicate().get();
-            predicate.evaluate(&context)
+            let predicate = event.predicate();
+            let predicate = predicate.borrow();
+            predicate.evaluate(&context).ok().unwrap_or_default()
         })
     }
 }

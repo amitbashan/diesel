@@ -29,7 +29,7 @@ Weekday: chrono::Weekday = {
     "tue" => chrono::Weekday::Tue,
     "wed" => chrono::Weekday::Wed,
     "thu" => chrono::Weekday::Thu,
-    "fri" => chrono::Weekday::Sat,
+    "fri" => chrono::Weekday::Fri,
     "sat" => chrono::Weekday::Sat,
 }
 
@@ -54,12 +54,27 @@ Date: chrono::NaiveDate = {
 }
 
 pub Expression: Expression = {
+    <l: Expression> "=" <r: Expression2> => Expression::Predicate(Box::new(Predicate::Equality(l, r))),
+    Expression2,
+}
+
+Expression2: Expression = {
+    <l: Expression2> "&" <r: Expression3> => Expression::Predicate(Box::new(Predicate::And(l, r))),
+    <l: Expression2> "|" <r: Expression3> => Expression::Predicate(Box::new(Predicate::Or(l, r))),
+    <l: Expression2> "%" <r: Expression3> => Expression::Arithmetic(Box::new(Arithmetic::Modulo(l, r))),
+    Expression3
+}
+
+Expression3: Expression = {
+    "!" <Expression3> => Expression::Predicate(Box::new(Predicate::Not(<>))),
+    Term,
+}
+
+Term: Expression = {
+    U32 => Expression::Number(<>),
     Placeholder => Expression::Placeholder(<>),
     Weekday => Expression::Weekday(<>),
     Month => Expression::Month(<>),
     Date => Expression::Date(<>),
-}
-
-pub Predicate: Predicate = {
-    <Expression> "=" <Expression> => Predicate::Equality(<>),
+    "(" <Expression> ")",
 }

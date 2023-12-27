@@ -22,9 +22,10 @@ pub struct Event {
 
 impl Event {
     pub fn parse(self) -> Option<schedule::event::Event> {
-        let predicate = grammar::PredicateParser::new()
+        let predicate = grammar::ExpressionParser::new()
             .parse(&self.predicate)
-            .ok()?;
+            .ok()?
+            .as_predicate()?;
         let time_pair = grammar::TimePairParser::new().parse(&self.time_pair).ok()?;
 
         Some(schedule::event::Event::new(
@@ -40,7 +41,9 @@ impl From<&schedule::Event> for Event {
     fn from(value: &schedule::Event) -> Self {
         let title = value.title().as_ref().borrow().clone();
         let description = value.description().as_ref().borrow().clone();
-        let predicate = value.predicate().get().to_string();
+        let predicate = value.predicate();
+        let predicate = predicate.borrow();
+        let predicate = predicate.to_string();
         let time_pair = value.time_pair().get().to_string();
         Self {
             title,

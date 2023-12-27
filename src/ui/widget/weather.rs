@@ -76,9 +76,7 @@ pub fn WeatherWidget<'a>(
             opts.hourly.push("weather_code".into());
             opts.daily.push("temperature_2m_max".into());
             opts.daily.push("temperature_2m_min".into());
-            let r = client.forecast(opts).await.ok();
-            log::info!("{r:#?}");
-            r
+            client.forecast(opts).await.ok()
         } else {
             None
         }

@@ -56,7 +56,9 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
     let event = schedule_ref.get_event(*i)?;
     let title = event.title().borrow().clone();
     let description = event.description().borrow().clone();
-    let predicate = event.predicate().get().to_string();
+    let predicate = event.predicate();
+    let predicate = predicate.borrow();
+    let predicate = predicate.to_string();
     let time_pair = event.time_pair().get().to_string();
     let navigator = use_navigator(cx);
     let error_state = use_ref(cx, || [false; 3]);
@@ -97,11 +99,12 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                 onsubmit: move |e| {
                     let values = &e.data.values;
                     let predicate = &values["predicate"][0];
-                    let predicate = grammar::PredicateParser::new().parse(predicate.as_str());
+                    let predicate = grammar::ExpressionParser::new().parse(predicate.as_str());
+                    let predicate = predicate.ok().map(|p| p.as_predicate()).flatten();
                     let time_pair = &values["timepair"][0];
                     let time_pair = grammar::TimePairParser::new().parse(time_pair.as_str());
 
-                    if predicate.is_err() {
+                    if predicate.is_none() {
                         set_error_state(PREDICATE_ERROR_STATE);
                     }
 
@@ -109,7 +112,7 @@ fn EventEditModal(cx: Scope, state: UseState<bool>, i: usize) -> Element {
                         set_error_state(TIMESPAN_ERROR_STATE);
                     }
 
-                    if let (Ok(predicate), Ok(time_pair)) = (predicate, time_pair) {
+                    if let (Some(predicate), Ok(time_pair)) = (predicate, time_pair) {
                         let title = &values["title"][0];
                         if title.is_empty() {
                             set_error_state(TITLE_ERROR_STATE);
