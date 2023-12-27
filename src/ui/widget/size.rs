@@ -11,9 +11,9 @@ pub enum WidgetSize {
 impl WidgetSize {
     pub const fn size_class(&self) -> &str {
         match self {
-            Self::Small => "w-20 h-20",
-            Self::Medium => "w-40 h-20",
-            Self::Large => "w-40 h-40",
+            Self::Small => "w-28 h-28",
+            Self::Medium => "w-56 h-28",
+            Self::Large => "w-56 h-56",
         }
     }
 

@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use strum::IntoEnumIterator;
 
 use super::{Widget, WidgetDataTransfer, WidgetDragState, WidgetManagerState};
 use crate::ui::{component::svg, widget::WidgetStates};
@@ -38,8 +39,9 @@ pub fn Drawer<'a>(
     children: Element<'a>,
 ) -> Element {
     let widget_states = use_shared_state::<WidgetStates>(cx)?;
-    let make_preview_container = |widget: Widget, sizes: [bool; 3]| {
+    let make_preview_container = |widget: Widget| {
         let w = widget.component();
+        let sizes = widget.sizes();
         let containers = sizes
             .iter()
             .enumerate()
@@ -68,6 +70,7 @@ pub fn Drawer<'a>(
             }
         }
     };
+    let containers = Widget::iter().map(|w| make_preview_container(w));
 
     render! {
         div {
@@ -94,8 +97,7 @@ pub fn Drawer<'a>(
                 }
                 div {
                     class: "w-92 min-h-full p-4 bg-base-200",
-                    make_preview_container(Widget::Time, [true, true, true]),
-                    make_preview_container(Widget::Weather, [true, false, false]),
+                    containers
                 }
             }
         }

@@ -23,7 +23,7 @@ pub fn GridCell<'a>(
         let sc = wdt.size.class();
         render! {
             div {
-                class: "relative group flex flex-1 h-full rounded-lg shadow-xl max-h-full {sc} {class}",
+                class: "flex flex-1 h-full rounded-lg shadow-xl max-h-full overflow-hidden {sc} {class}",
                 draggable: true,
                 prevent_default: "ondragover",
                 ondragover: move |e| {
@@ -47,7 +47,7 @@ pub fn GridCell<'a>(
         let opacity = drag_state.drag.then_some(DRAG_OPACITY).unwrap_or_default();
         render! {
             div {
-                class: "flex flex-1 h-full rounded-lg shadow-xl bg-neutral {class}",
+                class: "flex h-full rounded-lg shadow-xl bg-neutral {class}",
                 opacity: "{opacity}%",
                 transition: "opacity 0.3s",
                 prevent_default: "ondragover",

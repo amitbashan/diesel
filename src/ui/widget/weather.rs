@@ -1,3 +1,4 @@
+use chrono::Timelike;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -31,6 +32,18 @@ fn parse_weather_code(code: u8) -> &'static str {
     }
 }
 
+fn weather_code_to_svg(code: u8) -> fn(Scope) -> Element {
+    match code {
+        0 => svg::Sun,
+        1..=3 => svg::Cloud,
+        45 | 48 => svg::CloudFog,
+        51 | 53 | 55 | 56 | 57 | 61 | 63 | 65 | 66 | 67 | 80..=82 | 85 | 86 => svg::Drizzle,
+        71 | 73 | 75 | 77 => svg::Snow,
+        95 | 96 | 99 => svg::Thunderstorm,
+        _ => unreachable!(),
+    }
+}
+
 pub fn WeatherWidget<'a>(
     cx: &'a ScopeState,
     widget_size: WidgetSize,
@@ -59,6 +72,8 @@ pub fn WeatherWidget<'a>(
             opts.start_date = Some(start_date);
             opts.end_date = Some(start_date);
             opts.cell_selection = Some(open_meteo_rs::forecast::CellSelection::Nearest);
+            opts.hourly.push("temperature_2m".into());
+            opts.hourly.push("weather_code".into());
             opts.daily.push("temperature_2m_max".into());
             opts.daily.push("temperature_2m_min".into());
             let r = client.forecast(opts).await.ok();
@@ -74,13 +89,9 @@ pub fn WeatherWidget<'a>(
         render! {
             div {
                 class: "relative flex flex-1 h-full rounded-lg text-xl shadow-xl bg-base-100",
-                button {
-                    class: "absolute top-1 right-1 btn btn-xs btn-circle",
-                    onclick: move |_| {
-                        widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
-                    },
-                    svg::Gear {}
-                }
+                ondblclick: move |_| {
+                    widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
+                },
                 form {
                     class: "flex flex-col justify-center m-2 w-full",
                     onsubmit: move |e| {
@@ -127,39 +138,108 @@ pub fn WeatherWidget<'a>(
         if location.is_some() {
             let view = forecast.and_then(|forecast| {
                 if let Some(forecast) = forecast {
+                    const HOURS_FORECAST: usize = 5;
                     let current_weather = forecast.current_weather.as_ref().unwrap();
                     let temperature = current_weather.temperature.unwrap();
-                    let day_or_night = (current_weather.is_day.unwrap() != 0)
-                        .then_some(render! { svg::Sun {} })
-                        .unwrap_or(render! { svg::Moon {} });
-                    let weather_code =
-                        parse_weather_code(current_weather.weathercode.unwrap() as u8);
+                    let weather_code = current_weather.weathercode.unwrap() as u8;
+                    let weather_text = parse_weather_code(weather_code);
+                    let weather_icon = weather_code_to_svg(weather_code);
                     let daily = &forecast.daily.as_ref().unwrap()[0];
                     let temperature_low =
                         daily.values["temperature_2m_min"].value.as_f64().unwrap();
                     let temperature_high =
                         daily.values["temperature_2m_max"].value.as_f64().unwrap();
-
-                    render! {
-                        div {
-                            class: "flex flex-col flex-1",
+                    let hour = chrono::Local::now().time().hour() as usize;
+                    let hourly = forecast
+                        .hourly
+                        .as_ref()
+                        .unwrap()
+                        .iter()
+                        .skip(hour)
+                        .take(HOURS_FORECAST)
+                        .enumerate()
+                        .map(|(offset, forecast)| {
+                            let values = &forecast.values;
+                            let hour = hour + offset;
+                            let weather_code = values["weather_code"].value.as_u64().unwrap();
+                            let temperature = values["temperature_2m"].value.as_f64().unwrap();
+                            (hour, weather_code, temperature)
+                        });
+                    let hourly_forecast = hourly.map(|(hour, weather_code, temperature)| {
+                        let weather_icon = weather_code_to_svg(weather_code as u8);
+                        render! {
                             div {
-                                class: "font-md font-bold m-1",
-                                "{temperature}°"
-                            }
-                            div {
-                                class: "flex flex-col flex-1 justify-end m-1",
-                                day_or_night,
+                                class: "flex flex-col text-center",
                                 div {
-                                    class: "text-xs font-bold",
-                                    weather_code
+                                    class: "text-xs font-bold opacity-85",
+                                    "{hour}"
                                 }
                                 div {
-                                    class: "text-xs",
-                                    "L:{temperature_low}° H:{temperature_high}°",
+                                    class: "m-auto p-0.5",
+                                    weather_icon {}
+                                }
+                                div {
+                                    class: "text-xs font-bold",
+                                    "{temperature}°"
                                 }
                             }
                         }
+                    });
+
+                    match widget_size {
+                        WidgetSize::Small => render! {
+                            div {
+                                class: "flex flex-col flex-1 m-1",
+                                div {
+                                    class: "font-md font-bold",
+                                    "{temperature}°"
+                                }
+                                div {
+                                    class: "flex flex-col flex-1 justify-end",
+                                    weather_icon {},
+                                    div {
+                                        class: "text-xs font-bold",
+                                        weather_text
+                                    }
+                                    div {
+                                        class: "text-xs",
+                                        "L:{temperature_low}° H:{temperature_high}°",
+                                    }
+                                }
+                            }
+                        },
+                        WidgetSize::Medium => render! {
+                            div {
+                                class: "grid grid-rows-2 flex-1 m-1",
+                                div {
+                                    class: "flex flex-1 flex-justify-between",
+                                    div {
+                                        class: "font-md font-bold m-1",
+                                        "{temperature}°"
+                                    }
+                                    div {
+                                        class: "flex flex-col flex-1 text-right",
+                                        div {
+                                            class: "ml-auto",
+                                            weather_icon {},
+                                        }
+                                        div {
+                                            class: "text-xs font-bold",
+                                            weather_text
+                                        }
+                                        div {
+                                            class: "text-xs",
+                                            "L:{temperature_low}° H:{temperature_high}°",
+                                        }
+                                    }
+                                }
+                                div {
+                                    class: "grid grid-cols-5 flex-1",
+                                    hourly_forecast
+                                }
+                            }
+                        },
+                        _ => unreachable!(),
                     }
                 } else {
                     render! {
@@ -177,13 +257,9 @@ pub fn WeatherWidget<'a>(
             render! {
                 div {
                     class: "relative flex flex-1 h-full rounded-lg text-xl shadow-xl bg-base-100",
-                    button {
-                        class: "absolute top-1 right-1 btn btn-xs btn-circle",
-                        onclick: move |_| {
-                            widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
-                        },
-                        svg::Gear {}
-                    }
+                    ondblclick: move |_| {
+                        widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
+                    },
                     view,
                 }
             }
@@ -191,13 +267,9 @@ pub fn WeatherWidget<'a>(
             render! {
                 div {
                     class: "relative flex flex-1 h-full justify-center items-center rounded-lg text-xl shadow-xl bg-neutral",
-                    button {
-                        class: "absolute top-1 right-1 btn btn-xs btn-circle",
-                        onclick: move |_| {
-                            widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
-                        },
-                        svg::Gear {}
-                    }
+                    ondblclick: move |_| {
+                        widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
+                    },
                     span {
                         class: "text-sm text-neutral-content",
                         "Location not set."

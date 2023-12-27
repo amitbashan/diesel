@@ -9,6 +9,7 @@ mod time;
 pub mod weather;
 
 pub use drawer::{Drawer, DrawerButton};
+use strum::EnumIter;
 pub use time::TimeWidget;
 
 use crate::ui::component::GridCell;
@@ -21,16 +22,23 @@ type WidgetComponent =
     for<'a> fn(&'a ScopeState, WidgetSize, &'a UseSharedState<WidgetStates>) -> Element<'a>;
 
 pub const WIDGETS: [WidgetComponent; 2] = [TimeWidget, WeatherWidget];
-const ROWS: usize = 5;
+const ROWS: usize = 4;
 const COLS: usize = 7;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, EnumIter, Serialize, Deserialize)]
 pub enum Widget {
     Time,
     Weather,
 }
 
 impl Widget {
+    pub fn sizes(&self) -> [bool; 3] {
+        match self {
+            Widget::Time => [true, true, true],
+            Widget::Weather => [true, true, false],
+        }
+    }
+
     pub fn component(&self) -> WidgetComponent {
         WIDGETS[*self as usize]
     }
@@ -157,7 +165,7 @@ pub fn WidgetManager<'a>(
 
     render! {
         div {
-            class: "grid grid-rows-5 grid-cols-7 p-2 gap-1 items-start rounded flex-1 bg-base-200",
+            class: "grid grid-rows-4 grid-cols-7 p-2 gap-1 items-start rounded flex-1 min-h-0 bg-base-200",
             cells,
         }
     }
