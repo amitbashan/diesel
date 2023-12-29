@@ -7,7 +7,7 @@ grammar;
 
 U32: u32 = r"[0-9]+" => u32::from_str(<>).unwrap();
 
-pub Time: NaiveTime = {
+Time: NaiveTime = {
     <hour: U32> ":" <minute: U32> =>? NaiveTime::from_hms_opt(hour, minute, 0).ok_or(ParseError::User { error: "invalid time" }),
 }
 

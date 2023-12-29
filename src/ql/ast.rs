@@ -1,6 +1,6 @@
 use chrono::{Datelike, Duration, Month, NaiveDate, Weekday};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fmt};
+use std::fmt;
 
 use super::*;
 
@@ -61,13 +61,6 @@ impl Expression {
     pub fn as_predicate(self) -> Option<Predicate> {
         match self {
             Self::Predicate(p) => Some(*p),
-            _ => None,
-        }
-    }
-
-    pub fn as_bool(&self) -> Option<bool> {
-        match self {
-            Self::Boolean(b) => Some(*b),
             _ => None,
         }
     }
@@ -171,11 +164,11 @@ impl Evaluate<TypeResult<bool>> for Predicate {
                 match (left, right) {
                     (Expression::Number(l), Expression::Number(r)) => {
                         let c = if *greater_than { l > r } else { l < r };
-                        Ok(c && or_equal.then_some(l == r).unwrap_or(true))
+                        Ok(c || or_equal.then_some(l == r).unwrap_or(false))
                     }
                     (Expression::Date(l), Expression::Date(r)) => {
                         let c = if *greater_than { l > r } else { l < r };
-                        Ok(c && or_equal.then_some(l == r).unwrap_or(true))
+                        Ok(c || or_equal.then_some(l == r).unwrap_or(false))
                     }
                     _ => Err(TypeError::Mismatch),
                 }
