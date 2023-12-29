@@ -197,10 +197,11 @@ fn CalendarCard(
     let bordered = (&now == date)
         .then_some("card-bordered border-neutral")
         .unwrap_or_default();
-    let schedule = use_shared_state::<Schedule>(cx)?.read();
+    let schedule_state = use_shared_state::<Schedule>(cx)?;
+    let schedule = schedule_state.read();
     let d = date.day();
     let weekday = date.weekday();
-    let events = schedule.get_events_on_date(*date);
+    let events = schedule.get_events_on_date(Context { date: *date });
     let displayed_events: Vec<_> = events
         .map(|(i, _)| render! { EventTitleButton { i: i }})
         .collect();

@@ -4,7 +4,6 @@ use std::rc::Rc;
 
 pub use event::Event;
 
-use chrono::prelude::*;
 pub use event::TimePair;
 
 use crate::ql::{Context, Evaluate, Predicate};
@@ -66,8 +65,10 @@ impl Schedule {
         self.events.get(i)
     }
 
-    pub fn get_events_on_date(&self, date: NaiveDate) -> impl Iterator<Item = (usize, &Rc<Event>)> {
-        let context = Context { date };
+    pub fn get_events_on_date(
+        &self,
+        context: Context,
+    ) -> impl Iterator<Item = (usize, &Rc<Event>)> {
         self.events.iter().enumerate().filter(move |(_, event)| {
             let predicate = event.predicate();
             let predicate = predicate.borrow();

@@ -55,18 +55,29 @@ Date: chrono::NaiveDate = {
 
 pub Expression: Expression = {
     <l: Expression> "=" <r: Expression2> => Expression::Predicate(Box::new(Predicate::Equality(l, r))),
+    <left: Expression> "<" <or_equal: "="?> <right: Expression2> => Expression::Predicate(Box::new(Predicate::Comparison { greater_than: false, or_equal: or_equal.is_some(), left, right })),
+    <left: Expression> ">" <or_equal: "="?> <right: Expression2> => Expression::Predicate(Box::new(Predicate::Comparison { greater_than: true, or_equal: or_equal.is_some(), left, right })),
+    <l: Expression> "|" <r: Expression2> => Expression::Predicate(Box::new(Predicate::Or(l, r))),
+    <l: Expression> "+" <r: Expression2> => Expression::Arithmetic(Box::new(Arithmetic::Addition(l, r))),
     Expression2,
 }
 
 Expression2: Expression = {
     <l: Expression2> "&" <r: Expression3> => Expression::Predicate(Box::new(Predicate::And(l, r))),
-    <l: Expression2> "|" <r: Expression3> => Expression::Predicate(Box::new(Predicate::Or(l, r))),
     <l: Expression2> "%" <r: Expression3> => Expression::Arithmetic(Box::new(Arithmetic::Modulo(l, r))),
-    Expression3
+    Expression3,
 }
 
 Expression3: Expression = {
     "!" <Expression3> => Expression::Predicate(Box::new(Predicate::Not(<>))),
+    Expression4
+}
+
+Expression4: Expression = {
+    "md" "(" <Expression> ")" => Expression::Function(Box::new(Function::Monthday(<>))),
+    "wd" "(" <Expression> ")" => Expression::Function(Box::new(Function::Weekday(<>))),
+    "wdp" "(" <weekday: Expression> "," <date: Expression> ")" => Expression::Function(Box::new(Function::WeekdayPredecessor { weekday, date })),
+    "nw" "(" <low: Expression> "," <high: Expression> ")" => Expression::Function(Box::new(Function::NumberOfWeeks { low, high })),
     Term,
 }
 
