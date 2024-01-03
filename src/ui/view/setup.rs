@@ -98,7 +98,7 @@ pub fn Setup(cx: Scope) -> Element {
                                 to: "/new",
                                 button {
                                     class: "btn btn-outline join-item",
-                                    "Create new configuration"
+                                    "Create a new configuration"
                                 }
                             }
                         }
@@ -176,17 +176,19 @@ pub fn New(cx: Scope) -> Element {
                     "Setup"
                 }
                 view,
-                if *page.get() > 0 {
-                    render! {
-                        div {
-                            class: "flex justify-center items-center",
-                            button {
-                                class: "btn btn-outline btn-sm join-item",
-                                onclick: move |_| {
+                render! {
+                    div {
+                        class: "flex justify-center items-center",
+                        button {
+                            class: "btn btn-outline btn-sm join-item",
+                            onclick: move |_| {
+                                if *page.get() > 0 {
                                     page.modify(|p| p - 1);
-                                },
-                                "←"
-                            }
+                                } else {
+                                    navigator.push(Route::Setup {});
+                                }
+                            },
+                            "←"
                         }
                     }
                 }

@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use dioxus_router::prelude::*;
 
 use crate::{
-    ql::grammar,
+    lang::grammar,
     schedule::*,
     ui::{
         component::{svg, Layout, Modal, Navbar},

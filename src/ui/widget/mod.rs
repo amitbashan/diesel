@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -6,6 +9,7 @@ use serde::{Deserialize, Serialize};
 mod drawer;
 mod size;
 mod time;
+mod upcoming;
 pub mod weather;
 
 pub use drawer::{Drawer, DrawerButton};
@@ -16,12 +20,15 @@ use crate::ui::component::GridCell;
 
 pub use size::WidgetSize;
 
-use self::weather::{WeatherWidget, WeatherWidgetState};
+use self::{
+    upcoming::UpcomingEventsWidget,
+    weather::{WeatherWidget, WeatherWidgetState},
+};
 
 type WidgetComponent =
     for<'a> fn(&'a ScopeState, WidgetSize, &'a UseSharedState<WidgetStates>) -> Element<'a>;
 
-pub const WIDGETS: [WidgetComponent; 2] = [TimeWidget, WeatherWidget];
+pub const WIDGETS: [WidgetComponent; 3] = [TimeWidget, WeatherWidget, UpcomingEventsWidget];
 const ROWS: usize = 4;
 const COLS: usize = 7;
 
@@ -29,18 +36,34 @@ const COLS: usize = 7;
 pub enum Widget {
     Time,
     Weather,
+    UpcomingEvents,
 }
 
 impl Widget {
     pub fn sizes(&self) -> [bool; 3] {
         match self {
-            Widget::Time => [true, true, true],
-            Widget::Weather => [true, true, false],
+            Self::Time => [true, true, true],
+            Self::Weather => [true, true, false],
+            Self::UpcomingEvents => [false, true, true],
         }
     }
 
     pub fn component(&self) -> WidgetComponent {
         WIDGETS[*self as usize]
+    }
+}
+
+impl fmt::Display for Widget {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Time => "Time (debug widget)",
+                Self::Weather => "Weather",
+                Self::UpcomingEvents => "Upcoming Events",
+            }
+        )
     }
 }
 

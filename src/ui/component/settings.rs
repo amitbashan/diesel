@@ -1,15 +1,60 @@
 use dioxus::prelude::*;
+use dioxus_router::prelude::*;
 
 use super::ThemeCard;
-use crate::ui::{Theme, THEMES};
+use crate::{
+    configuration::{Configuration, ConfigurationManager},
+    ui::{Route, Theme, THEMES},
+};
 
-fn Configuration(cx: Scope) -> Element {
+fn Configuration<'a>(
+    cx: &'a ScopeState,
+    cfg_manager: &'a UseSharedState<ConfigurationManager>,
+) -> Element<'a> {
+    let path = cfg_manager.with(|cfg| {
+        cfg.path
+            .as_ref()
+            .map(|s| s.as_str())
+            .unwrap_or_default()
+            .to_string()
+    });
+    let navigator = use_navigator(cx);
+
     render! {
-        "Configuration"
+        div {
+            class: "flex flex-col gap-1 m-2",
+            div {
+                class: "flex justify-between w-full",
+                p {
+                    class: "text-lg font-bold",
+                    "Configuration"
+                }
+                button {
+                    class: "btn btn-sm",
+                    onclick: move |_| {
+                        Configuration::try_save(&cfg_manager).expect("failed to save configuration");
+                        cfg_manager.with_mut(|cfg| cfg.path = None);
+                        navigator.push(Route::Setup {  });
+                    },
+                    "Logout"
+                }
+            }
+            div {
+                p {
+                    class: "text-md",
+                    "Path: "
+                    input {
+                        class: "input input-bordered input-sm w-full max-w-xs font-mono",
+                        readonly: true,
+                        value: path,
+                    }
+                }
+            }
+        }
     }
 }
 
-fn Appearance(cx: Scope) -> Element {
+fn Appearance<'a>(cx: &'a ScopeState, _: &'a UseSharedState<ConfigurationManager>) -> Element<'a> {
     let theme_state = use_shared_state::<Theme>(cx)?;
     let cards = THEMES.iter().map(|theme| {
         render! {
@@ -21,8 +66,8 @@ fn Appearance(cx: Scope) -> Element {
 
     render! {
         div {
-            class: "flex justify-between pb-2",
-            span {
+            class: "flex justify-between m-2",
+            p {
                 class: "text-lg font-bold",
                 "Theme"
             }
@@ -45,10 +90,21 @@ fn Appearance(cx: Scope) -> Element {
 }
 
 pub fn Settings(cx: Scope) -> Element {
-    const VIEWS: [fn(Scope) -> Element; 2] = [Configuration, Appearance];
+    const VIEWS: [for<'a> fn(
+        &'a ScopeState,
+        &'a UseSharedState<ConfigurationManager>,
+    ) -> Element<'a>; 2] = [Configuration, Appearance];
     const VIEWS_LABELS: [&str; 2] = ["Configuration", "Appearance"];
+    let cfg_manager = use_shared_state::<ConfigurationManager>(cx)?;
     let page = use_state(cx, || 0);
-    let view = VIEWS[*page.get()];
+    let views = VIEWS.iter().enumerate().map(|(i, view)| {
+        render! {
+            div {
+                hidden: page.get() == &i,
+                view(cx, cfg_manager),
+            }
+        }
+    });
     let view_buttons = VIEWS_LABELS.iter().enumerate().map(|(i, view)| {
         let chosen = (&i == page.get())
             .then_some("btn-active")
@@ -75,8 +131,8 @@ pub fn Settings(cx: Scope) -> Element {
                 }
             }
             div {
-                class: "col-span-3 pl-1.5",
-                view(cx),
+                class: "col-span-3 pl-1.5 overflow-hidden",
+                views
             }
         }
     }

@@ -61,7 +61,7 @@ pub fn Drawer<'a>(
             div {
                 p {
                     class: "text-lg",
-                    "{widget:?}"
+                    widget.to_string()
                 }
                 div {
                     class: "carousel carousel-center w-full max-w-xs items-center p-4 space-x-4 bg-neutral rounded-box",

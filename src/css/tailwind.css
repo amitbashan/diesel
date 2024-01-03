@@ -3168,6 +3168,10 @@ html {
   .btn-neutral {
     --btn-color: var(--fallback-n);
   }
+
+  .prose :where(code):not(:where([class~="not-prose"] *, pre *)) {
+    background-color: var(--fallback-b3,oklch(var(--b3)/1));
+  }
 }
 
 @supports (color: color-mix(in oklab, black, black)) {
@@ -4017,11 +4021,11 @@ html {
   --tw-prose-td-borders: var(--fallback-bc,oklch(var(--bc)/0.2));
 }
 
-.prose :where(code):not(:where([class~="not-prose"] *)) {
+.prose :where(code):not(:where([class~="not-prose"] *, pre *)) {
   padding: 1px 8px;
   border-radius: var(--rounded-badge);
-  background-color: var(--fallback-bc,oklch(var(--bc)/0.1));
   font-weight: initial;
+  background-color: var(--fallback-bc,oklch(var(--bc)/0.1));
 }
 
 .prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::before, .prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::after {
@@ -4767,10 +4771,6 @@ html {
 .py-3 {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
-}
-
-.pb-2 {
-  padding-bottom: 0.5rem;
 }
 
 .pl-1 {

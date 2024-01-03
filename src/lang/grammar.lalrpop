@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use chrono::prelude::*;
-use crate::{schedule::event::*, ql::ast::*};
+use crate::{schedule::event::*, lang::ast::*};
 use lalrpop_util::ParseError;
 
 grammar;

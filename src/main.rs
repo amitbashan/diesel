@@ -15,7 +15,7 @@ use crate::{
 
 mod configuration;
 mod hook;
-mod ql;
+mod lang;
 mod schedule;
 mod ui;
 

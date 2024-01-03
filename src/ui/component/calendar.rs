@@ -6,7 +6,7 @@ use dioxus_router::prelude::*;
 
 use super::Modal;
 use crate::{
-    ql::*,
+    lang::*,
     schedule::{event::Event, *},
     ui::{
         view::event::{
@@ -201,7 +201,7 @@ fn CalendarCard(
     let schedule = schedule_state.read();
     let d = date.day();
     let weekday = date.weekday();
-    let events = schedule.get_events_on_date(Context { date: *date });
+    let events = schedule.query_with_context(Context { date: *date });
     let displayed_events: Vec<_> = events
         .map(|(i, _)| render! { EventTitleButton { i: i }})
         .collect();

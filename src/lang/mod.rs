@@ -4,7 +4,7 @@ pub use ast::*;
 
 use lalrpop_util::lalrpop_mod;
 
-lalrpop_mod!(pub grammar, "/ql/grammar.rs");
+lalrpop_mod!(pub grammar, "/lang/grammar.rs");
 
 pub struct Context {
     pub date: chrono::NaiveDate,

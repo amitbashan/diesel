@@ -6,7 +6,7 @@ pub use event::Event;
 
 pub use event::TimePair;
 
-use crate::ql::{Context, Evaluate, Predicate};
+use crate::lang::{Context, Evaluate, Predicate};
 
 #[derive(Default)]
 pub struct Schedule {
@@ -65,7 +65,7 @@ impl Schedule {
         self.events.get(i)
     }
 
-    pub fn get_events_on_date(
+    pub fn query_with_context(
         &self,
         context: Context,
     ) -> impl Iterator<Item = (usize, &Rc<Event>)> {

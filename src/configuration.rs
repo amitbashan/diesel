@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fs, io, path::Path, rc::Rc};
 
 use crate::{
-    ql::grammar,
+    lang::grammar,
     schedule,
     ui::{
         widget::{WidgetManagerState, WidgetStates},

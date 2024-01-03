@@ -1,4 +1,4 @@
-use crate::ql::Predicate;
+use crate::lang::Predicate;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::{
