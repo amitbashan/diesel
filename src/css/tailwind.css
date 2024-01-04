@@ -4674,11 +4674,6 @@ html {
   border-color: var(--fallback-bc,oklch(var(--bc)/0.2));
 }
 
-.border-error {
-  --tw-border-opacity: 1;
-  border-color: var(--fallback-er,oklch(var(--er)/var(--tw-border-opacity)));
-}
-
 .border-neutral {
   --tw-border-opacity: 1;
   border-color: var(--fallback-n,oklch(var(--n)/var(--tw-border-opacity)));

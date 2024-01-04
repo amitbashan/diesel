@@ -1,4 +1,7 @@
-use std::fs;
+use std::{
+    borrow::{Borrow, Cow},
+    fs,
+};
 
 use dioxus::prelude::*;
 use dioxus_router::prelude::*;
@@ -42,7 +45,7 @@ pub fn Setup(cx: Scope) -> Element {
                             "Setup"
                         }
                     },
-                    description: "Failed to read user configuration.",
+                    description: Cow::Borrowed("Failed to read user configuration."),
                 }
             },
             Err(e) => render! {
@@ -56,8 +59,8 @@ pub fn Setup(cx: Scope) -> Element {
                             "Setup"
                         }
                     },
-                    description: "Encountered an I/O error while trying to read user configuration:",
-                    error: e.to_string(),
+                    description: Cow::Borrowed("Encountered an I/O error while trying to read user configuration:"),
+                    error: Cow::Owned(e.to_string()),
                 }
             },
         }
@@ -113,6 +116,9 @@ pub fn New(cx: Scope) -> Element {
     let navigator = use_navigator(cx);
     let save = use_save(cx);
     let cfg_manager = use_shared_state::<ConfigurationManager>(cx)?;
+    let modal_state = use_state(cx, || false);
+    let description = use_state(cx, || Cow::Borrowed(""));
+    let error = use_state(cx, || Cow::Borrowed(""));
     let page = use_state(cx, || 0);
     let path_state = use_state(cx, || None::<String>);
     let view = match page.get() {
@@ -157,14 +163,26 @@ pub fn New(cx: Scope) -> Element {
         },
         2 => {
             let path = path_state.get().as_ref().unwrap();
-            fs::File::create(path).expect("failed to create configuration");
-            cfg_manager.with_mut(|s| s.path = Some(path.clone()));
-            save();
-            navigator.push(Route::Setup {});
-            None
+            if let Err(e) = fs::File::create(path) {
+                page.modify(|p| p - 1);
+                description.set(Cow::from(
+                    "Encountered an I/O error while creating your configuration:",
+                ));
+                error.set(Cow::Owned(e.to_string()));
+                modal_state.set(true);
+                None
+            } else {
+                cfg_manager.with_mut(|s| s.path = Some(path.clone()));
+                save();
+                navigator.push(Route::Setup {});
+                None
+            }
         }
         _ => None,
     };
+
+    let description: Cow<_> = Borrow::<str>::borrow(description.get().as_ref()).into();
+    let error: Cow<_> = Borrow::<str>::borrow(error.get().as_ref()).into();
 
     render! {
         div {
@@ -193,6 +211,20 @@ pub fn New(cx: Scope) -> Element {
                     }
                 }
             }
+        }
+        ErrorModal {
+            action: render! {
+                button {
+                    class: "btn",
+                    onclick: move |_| {
+                        modal_state.set(false);
+                    },
+                    "←"
+                }
+            },
+            open: modal_state.clone(),
+            description: description,
+            error: error
         }
     }
 }

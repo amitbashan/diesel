@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use dioxus::prelude::*;
 
 #[component]
@@ -30,13 +32,21 @@ pub fn Modal<'a>(
 #[component]
 pub fn ErrorModal<'a>(
     cx: Scope<'a>,
+    open: Option<UseState<bool>>,
     action: Option<Element<'a>>,
-    description: &'a str,
-    error: Option<String>,
+    description: Option<Cow<'a, str>>,
+    error: Option<Cow<'a, str>>,
 ) -> Element {
+    let open = open
+        .as_ref()
+        .map(|s| *s.get())
+        .unwrap_or(true)
+        .then_some("modal-open")
+        .unwrap_or_default();
+
     render! {
         dialog {
-            class: "modal modal-open",
+            class: "modal {open}",
             div {
                 class: "modal-box",
                 article {
@@ -44,12 +54,12 @@ pub fn ErrorModal<'a>(
                     h3 {
                         "Error"
                     }
-                    p { description }
+                    p { description.as_ref().unwrap_or(&Cow::Borrowed("No description provided.")) }
                     if let Some(e) = error {
                         render! {
                             div {
-                                class: "border border-error font-mono bg-base-300",
-                                "{e}"
+                                class: "border border-neutral font-mono bg-base-300",
+                                e
                             }
                         }
                     }
@@ -62,7 +72,7 @@ pub fn ErrorModal<'a>(
                 }
             }
             div {
-                class: "modal-backdrop cursor-pointer",
+                class: "modal-backdrop",
             }
         }
     }
