@@ -81,6 +81,11 @@ The language defines an expression to be either a:
 | `wdp`    | `weekday`, `date` | The date of the previous `weekday`                 |
 | `nw`     | `date`, `date`    | The number of weeks in the span of the given dates |
 
+## Preview
+### Settings → Appearance
+Diesel offers a variety of themes (32) provided by daisyUI:
+![](./examples/SettingsAppearance.png)
+
 ## Building from source
 Install the following dependencies and build the project using `cargo build`.
 

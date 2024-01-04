@@ -80,7 +80,7 @@ fn Appearance<'a>(cx: &'a ScopeState, _: &'a UseSharedState<ConfigurationManager
             }
         }
         div {
-            class: "max-h-40 overflow-y-auto",
+            class: "max-h-64 overflow-y-auto",
             div {
                 class: "grid grid-cols-2 gap-2 p-2",
                 cards
@@ -100,7 +100,7 @@ pub fn Settings(cx: Scope) -> Element {
     let views = VIEWS.iter().enumerate().map(|(i, view)| {
         render! {
             div {
-                hidden: page.get() == &i,
+                hidden: page.get() != &i,
                 view(cx, cfg_manager),
             }
         }
