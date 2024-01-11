@@ -41,6 +41,7 @@ pub fn UpcomingEventsWidget<'a>(
         let eta = match (hours, minutes) {
             (0, 0) => Cow::Borrowed("now"),
             (0, minutes) => Cow::Owned(format!("in {minutes} minutes")),
+            (hours, 0) => Cow::Owned(format!("in {hours} hours")),
             (hours, minutes) => Cow::Owned(format!("in {hours} hours and {minutes} minutes")),
         };
         let event_buttons = events.iter().map(|(i, _)| {
