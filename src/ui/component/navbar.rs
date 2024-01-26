@@ -75,13 +75,6 @@ pub fn Navbar<'a>(cx: Scope<'a>, center: Option<Element<'a>>, end: Option<Elemen
                         class: "dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40",
                         tabindex: 0,
                         li {
-                            Link {
-                                to: Route::Calendar {},
-                                svg::DocumentStack {},
-                                "Manual",
-                            }
-                        }
-                        li {
                             a {
                                 onclick: move |_| {
                                     settings_modal_state.modify(|s| !s);

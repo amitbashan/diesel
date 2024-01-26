@@ -269,7 +269,7 @@ pub fn WeatherWidget<'a>(
                         widget_states.with_mut(|s| s.weather.settings = !s.weather.settings);
                     },
                     span {
-                        class: "text-sm text-neutral-content",
+                        class: "text-sm text-neutral-content font-mono",
                         "Location not set."
                     }
                 }

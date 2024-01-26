@@ -28,6 +28,18 @@ pub enum PlaceholderUnit {
     Date,
 }
 
+impl Evaluate<Expression> for PlaceholderUnit {
+    fn evaluate(&self, context: &Context) -> Expression {
+        match self {
+            Self::Weekday => Expression::Weekday(context.date.weekday()),
+            Self::Monthday => Expression::Number(context.date.day()),
+            Self::Month => Expression::Month(Month::try_from(context.date.month() as u8).unwrap()),
+            Self::Year => Expression::Number(context.date.year_ce().1),
+            Self::Date => Expression::Date(context.date),
+        }
+    }
+}
+
 impl fmt::Display for PlaceholderUnit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -64,20 +76,24 @@ impl Expression {
             _ => None,
         }
     }
+
+    pub fn is_terminal(&self) -> bool {
+        match self {
+            Self::Boolean(_)
+            | Self::Number(_)
+            | Self::Placeholder(_)
+            | Self::Weekday(_)
+            | Self::Month(_)
+            | Self::Date(_) => true,
+            _ => false,
+        }
+    }
 }
 
 impl Evaluate<TypeResult<Self>> for Expression {
     fn evaluate(&self, context: &Context) -> TypeResult<Self> {
         match self {
-            Self::Placeholder(e) => Ok(match e {
-                PlaceholderUnit::Weekday => Self::Weekday(context.date.weekday()),
-                PlaceholderUnit::Monthday => Self::Number(context.date.day()),
-                PlaceholderUnit::Month => {
-                    Self::Month(Month::try_from(context.date.month() as u8).unwrap())
-                }
-                PlaceholderUnit::Year => Self::Number(context.date.year_ce().1),
-                PlaceholderUnit::Date => Self::Date(context.date),
-            }),
+            Self::Placeholder(e) => Ok(e.evaluate(context)),
             Self::Predicate(e) => e.evaluate(context).map(Self::Boolean),
             Self::Arithmetic(e) => e.evaluate(context),
             Self::Function(e) => e.evaluate(context),
@@ -179,23 +195,32 @@ impl Evaluate<TypeResult<bool>> for Predicate {
 
 impl fmt::Display for Predicate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let parenthesize = |e: &Expression| {
+            if e.is_terminal() {
+                e.to_string()
+            } else {
+                format!("({e})")
+            }
+        };
         write!(
             f,
             "{}",
             match self {
-                Self::Equality(l, r) => format!("{l} = {r}"),
-                Self::And(l, r) => format!("{l} & {r}"),
-                Self::Or(l, r) => format!("{l} | {r}"),
-                Self::Not(e) => format!("!{e}"),
+                Self::Equality(l, r) => format!("{} = {}", parenthesize(l), parenthesize(r)),
+                Self::And(l, r) => format!("{} & {}", parenthesize(l), parenthesize(r)),
+                Self::Or(l, r) => format!("{} | {}", parenthesize(l), parenthesize(r)),
+                Self::Not(e) => format!("!{}", parenthesize(e)),
                 Self::Comparison {
                     greater_than,
                     or_equal,
                     left,
                     right,
                 } => format!(
-                    "{left} {}{} {right}",
+                    "{} {}{} {}",
+                    parenthesize(left),
                     if *greater_than { ">" } else { "<" },
-                    or_equal.then_some("=").unwrap_or_default()
+                    or_equal.then_some("=").unwrap_or_default(),
+                    parenthesize(right),
                 ),
             }
         )
