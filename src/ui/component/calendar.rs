@@ -181,7 +181,7 @@ pub fn EventTitleButton(cx: Scope, i: usize) -> Element {
             onclick: move |_| {
                 navigator.push(Route::EventInstance { i: *i });
             },
-            span { class: "truncate", "{title}" }
+            span { class: "truncate text-xs", "{title}" }
         }
     }
 }
@@ -224,7 +224,7 @@ fn CalendarCard(
                 class: "card-body p-[0.5rem]",
                 div {
                     class: "card-title justify-between",
-                    span {
+                    p {
                         class: "text-sm",
                         "{weekday:?} {d}",
                     }
@@ -252,7 +252,7 @@ pub fn MonthlyCalendar(cx: Scope, year: i32, month: u32) -> Element {
         div {
             class: "flex items-start rounded bg-base-200 h-full",
             div {
-                class: "flex-1 grid grid-cols-7 grid-rows-5 gap-2 p-2 h-full",
+                class: "flex-1 grid grid-cols-7 grid-rows-5 gap-1 p-2 h-full",
                 cards
             }
         }
